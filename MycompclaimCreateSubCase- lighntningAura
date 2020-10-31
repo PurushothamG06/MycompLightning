@@ -1,0 +1,1151 @@
+component:
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" 
+                controller="MyCompClaimCreateSubCaseControllerLTG"
+                access="global" >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="parentList" type="list" default="[]" description=""/>
+    <aura:attribute name="childList" type="list" default="[]"/>
+    <aura:attribute name="DOApickListMap" type="map"/>
+    
+    <aura:attribute name="DependpickListMap" type="map"/>
+    <aura:attribute name="childList1" type="list" default="[]"/>
+    <aura:attribute name="disabledChildField1" type="boolean" default="true"/>
+    
+    <aura:attribute name="parentFieldLabel" type="string" />
+    <aura:attribute name="childFieldLabel" type="string"/>
+    <aura:attribute name="parentValue" type="string" default=""/>
+    <aura:attribute name="childValue" type="string" default=""/>
+    <aura:attribute name="subCaseDesc" type="string" default=""/>
+    
+    
+    <aura:attribute name="dependFieldLabel" type="string" />
+    <aura:attribute name="dependValue" type="string" default=""/>
+    <aura:attribute name="dependList" type="list" default="[]" description=""/>
+    
+    <aura:attribute name="disabledChildField" type="boolean" default="true"/>
+    
+    <aura:attribute name="DOAApproveListMap" type="map"/>
+    <aura:attribute name="childMapList" type="list" default="[]"/>
+    <aura:attribute name="disabledChildMapField" type="boolean" default="true"/>
+    
+    <aura:attribute name="AllApprovalList" type="list" default="[]"/>
+    
+    <aura:attribute name="modalopen" type="Boolean" default="false"/>
+    <aura:attribute name="selectedLookUpRecord" type="sObject" default="{}"/>
+    <aura:attribute name="callspinner" type ="Boolean" default ="false"/>
+    <aura:attribute name="objectAPIName" type="string" default="User"/>
+    <aura:attribute name="SearchKeyWord1" type="string"/>
+    <!-- Infinite loading-->
+    <aura:attribute name="enableInfiniteLoading" type="Boolean" default="true"/>
+    <aura:attribute name="initialRows" type="Integer" default="10"/>
+    <aura:attribute name="currentCount" type="Integer" default="10"/>
+    <aura:attribute name="totalRows" type="Integer" default="0"/>
+    <aura:attribute name="loadOffset" type="Integer" default="1"/><!--Set when to trigger loading of more rows-->
+    <!--Aura Attributes END--> 
+    
+    <aura:attribute name="option2" type="boolean"  />
+    <aura:attribute name="option1" type="boolean" />
+    <aura:attribute name="options" type="List" default="[{'label': 'Dependent Task', 'value': 'option1'},{'label': 'Approval', 'value': 'option2'}]"/>
+    <aura:attribute name ="value" type="string"/>
+    
+    <aura:attribute name ="Approval" type="boolean" default="false"/>
+    <aura:attribute name ="approvalShowHide" type ="boolean" default ="false"/>
+    <!-- Start Picklist Values -->
+    
+    <aura:attribute name="dependentTaskPicklist" type="list" default="[]"/>
+    <aura:attribute name="dependentTaskList" type="list" default="[]"/>
+    <aura:attribute name="selectedDependentTask" type="string"/>
+    <aura:attribute name="DependentTaskDesc" type="string"/>
+    <aura:attribute name="DependentTaskUser" type="User"/>
+    
+    <!-- submit for Approval radio button - fields used - starts -->
+    <aura:attribute name="selectedDOAname" type="string"/>
+    <aura:attribute name="selectedDOAnumber" type="string"/>
+    <!-- submit fields used - ends -->
+    
+    <aura:attribute name="spinner" type ="boolean" default="false"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <!-- this attribute is for hiding the radio buttons if parent is present for a subcase -->
+    <aura:attribute name="withParent" type="string" default="Cannot create a subCase in a Subcase"/>
+    
+    
+      <!--Loading of spinner start-->
+    <aura:if isTrue="{!v.spinner}">
+    <div aura:id="spinnerId" class="slds-spinner_container">
+        <div class ="slds-spinner--brand slds-spinner slds-spinner--large slds-is-relative" role="alert">
+            <span class="slds-assistive-text">Loading...Please wait</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+        </div>
+    </aura:if>
+    <!--Loading of spinner end -->
+    <lightning:card class="page">
+        <div class="slds-align_absolute-left">
+            <br/><br/>
+            <lightning:radioGroup class ="check" name="mySelect" options="{!v.options}" value="{!v.value}" aura:id="mySelect"  type="radio"  onchange="{!c.toggle}" > 
+            </lightning:radioGroup>
+        </div><br/>
+        
+        <aura:if isTrue="{!v.option2}">
+            <!--Approval -->
+            <lightning:card title="Select DOA Values" class="slds-text-heading_small detailfont">
+                <div class="slds-col">
+                    <!--lightning:recordEditform recordId="{!v.recordId}" objectApiName="MyCompClaim_Mapper__c">
+                    <lightning:messages / -->
+                    
+                    <!-- Controller Field : starts -->
+                    <lightning:layoutItem size="12" padding="around-small">    
+                        <lightning:select name="parentField" aura:id="parentField"
+                                          value="{!v.parentValue}"
+                                          label="{!v.parentFieldLabel}"
+                                          onchange="{!c.parentFieldChange}">
+                            <aura:iteration items="{!v.parentList}" var="value">
+                                <option value="{!value}">{!value}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </lightning:layoutItem>
+                    
+                    <!-- Controller Field : ends -->
+                    <!--Dependent Field-->
+                    <lightning:layoutItem size="12" padding="around-small">
+                        <lightning:select name="childField" aura:id="childField"
+                                          value="{!v.childValue}"
+                                          label="{!v.childFieldLabel}"
+                                          onchange="{!c.showDOAnamelist}"
+                                          disabled="{!v.disabledChildField}">
+                            <aura:iteration items="{!v.childList}" var="value">
+                                <option value="{!if(value=='--None--','--None--',value.Id) }">{!if(value=='--None--','--None--',value.DOA_Name__c)}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </lightning:layoutItem><br/>
+                    <lightning:layoutItem flexibility="auto" padding="around-small">
+                        <lightning:textarea value="{!v.subCaseDesc}" label="Description"  title="Desc"/>
+                        
+                    </lightning:layoutItem>
+				</div> 
+
+            </lightning:card><br/>
+            
+            <aura:set attribute="else">
+                <aura:if isTrue="{!v.option1}">
+                    
+                    <!-- Dependent task-->
+                    <lightning:card title="Select Dependencies" class="slds-text-heading_small detailfont">       
+                        <div class="slds-col">
+                            <lightning:layoutItem size="12" padding="around-small">
+                                <lightning:select name="dependField" aura:id="dependField"
+                                                  value="{!v.dependValue}"
+                                                  label="{!v.dependFieldLabel}"
+                                                  onchange="{!c.dependFieldChange}">
+                                    <aura:iteration items="{!v.dependentTaskPicklist}" var="value">
+                                        <option value="{!value}">{!value}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </lightning:layoutItem>
+                            
+                            <lightning:layoutItem flexibility="auto" padding="around-small">
+                                <div >
+                                    <lightning:textarea value="{!v.DependentTaskDesc}" label="Description"  title="DependentTaskDesc"/> </div>
+                            </lightning:layoutItem>
+                            
+                            <lightning:layoutItem flexibility="auto" padding="around-small">
+                                <div ><div class="slds-form-element__label">Approver User    </div>
+                                    <c:MyComp_CustomLookup aura:id="DependentUserLookup" spinner ="{!v.callspinner}" objectAPIName="User" IconName="standard:user" selectedRecord="{!v.DependentTaskUser}"  />  
+                                </div>
+                            </lightning:layoutItem>
+                            
+                            <lightning:layoutItem flexibility="auto" padding="around-small">
+                                <div >
+                                    <lightning:input type="text"   label="Email (Dependency)"  title="Email" readonly="true" value="{!if(v.DependentTaskUser!=null,v.DependentTaskUser.Email,'')}"  />
+                                </div>
+                            </lightning:layoutItem>
+                        </div>                        
+                        <br/>
+						<div class="slds-align_absolute-center" >
+                        <lightning:button variant="brand" label="Submit Dependent Task" title="Brand action" onclick="{! c.handleDependentTaskSubmit }" /></div>
+                   <br/><br/>
+                    </lightning:card> 
+                    
+                </aura:if>
+            </aura:set>
+        </aura:if>
+        
+        
+        <aura:if isTrue="{!and(v.approvalShowHide,v.option2)}">
+            <lightning:card title="Approver Details" class = "app">
+                
+                <table class="slds-table slds-table_bordered slds-table_col-bordered tableBodyScroll">
+                    <thead class="head-style">
+                        <tr class="slds-text-body_regular">
+                            <th scope="col" class="slds-cell-wrap" title="Approver Level">Approver Level</th>
+                            <th scope="col" class="slds-cell-wrap" title="Approver">Approver</th>
+                            <th scope="col" class="slds-cell-wrap" title="User" >User</th>
+                            <th scope="col" class="slds-cell-wrap" title="Email(Dependency)">Email(Dependency)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr></tr>
+                        <aura:iteration items="{!v.AllApprovalList}" var="appRec">
+                            <tr >
+                                <td scope="row" class="slds-cell-wrap">
+                                    <lightning:input type="text" readonly="true" value="{!appRec.level}"/>
+                                </td>
+                                <td scope="row" class="slds-cell-wrap">
+                                    <lightning:input type="text" readonly="true" value="{!appRec.Approver}"  />
+                                </td>
+                                <td scope="row" class="slds-cell-wrap">
+                                    <c:MyComp_CustomLookup aura:id="custLookup" spinner ="{!v.callspinner}" objectAPIName="User" IconName="standard:user" selectedRecord="{!appRec.ApproverUser}"  />   
+                                    
+                                </td>
+                                <td scope="row" class="slds-cell-wrap">
+                                    <lightning:input type="text" readonly="true" value="{!appRec.ApproverUser.Email}"  />
+                                </td>
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table><br/><br/><br/><br/>
+                <aura:set attribute="footer">
+				<div class="slds-align_absolute-center" id="bottom">
+                    <lightning:button  variant="brand" label="Submit Approval" title="Brand action" onclick="{! c.handleApprovalSubmit }" />
+                    </div>  <br/>  
+                </aura:set>
+            </lightning:card>
+        </aura:if>
+        
+        <!-- user data table-->
+        <aura:if isTrue="{!v.modalopen}">
+            <div >
+                <!-- Modal/Popup Box starts here-->
+                <section role="dialog" tabindex="1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_large ">
+                    <div class="slds-modal__container">
+                        <!-- Modal/Popup Box Header Starts here-->
+                        <header class="slds-modal__header">
+                            <lightning:buttonIcon iconName="utility:close"
+                                                  onclick="{! c.closeModeltable }"
+                                                  alternativeText="close"
+                                                  variant="bare-inverse"
+                                                  class="slds-modal__close"/>
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">User Results</h2>
+                        </header>
+                        <!--Modal/Popup Box Body Starts here-->
+                        <div class="slds-modal__content slds-p-around_large" id="modal-content-id-1">
+                            
+                            <!--This part is for display search bar for lookup-->  
+                            <div class="slds-form-element__control slds-scrollable">
+                                <div class="slds-input-has-icon slds-input-has-icon--right"> 
+                                    <div aura:id="lookupField1" class="slds-show">
+                                        <lightning:icon class="slds-input__icon slds-show" iconName="utility:search" size="x-small" alternativeText="search"/>
+                                        <span class="slds-icon_container  slds-combobox__input-entity-icon" title="record">
+                                            <lightning:icon class="slds-icon slds-icon slds-icon_small slds-icon-text-default" iconName="{!v.IconName}" size="x-small" alternativeText="icon"/>
+                                            <span class="slds-assistive-text"></span>
+                                        </span>
+                                        <ui:inputText  class="slds-lookup__search-input slds-input leftPaddingClass" updateOn="keyup" keyup="{!c.keyPressControlleruser}" value="{!v.SearchKeyWord1}"/>
+                                    </div>  
+                                </div>
+                            </div>
+                            <br></br>
+                            
+                            <!-- Table For searching the Rendered Results-->
+                            
+                            <lightning:datatable keyField="id" 
+                                                 data="{! v.userdatatablelist}" 
+                                                 onrowaction="{! c.handleRowActionDataTable }" 
+                                                 columns="{! v.mycolumns}" 
+                                                 hideCheckboxColumn="true" 
+                                                 aura:id="lightDatTblST1"  enableInfiniteLoading="{!v.enableInfiniteLoading}"
+                                                 loadMoreOffset="{!v.loadOffset}"
+                                                 onloadmore="{!c.handleLoadMore}" sortedBy="{! v.sortedBy }" sortedDirection="{! v.sortedDirection }" defaultSortDirection="{! v.defaultSortDirection }" onsort="{! c.updateColumnSorting }" /> 
+                            
+                            
+                            <!-- Table End-->
+                            
+                        </div>
+                        <!--Modal/Popup Box Footer Starts here-->
+                        <footer class="slds-modal__footer">
+                            <lightning:button variant="neutral"
+                                              label="Cancel"
+                                              title="Cancel"
+                                              onclick="{! c.closeModeltable }"/>
+                            
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_false"></div>
+            </div>
+        </aura:if>
+        <!-- ends -->
+        
+        
+    </lightning:card>
+</aura:component>
+=================================================
+controller:
+({
+    toggle: function (component, event, helper) {        
+        var sel = component.find("mySelect");
+        var nav = sel.get("v.value");        
+        if (nav == "option1") {
+            component.set("v.option1", true);
+            component.set("v.option2", false);
+        }        
+        else if(nav == "option2"){
+            component.set("v.option1", false);
+            component.set("v.option2", true);            
+        }        
+    },
+    
+    doInit : function(component, event, helper) {   
+       // component.set("v.recordId",'5002D000006OqHqQAK');//hard coded
+        console.log("caseId>>>>"+component.get("v.recordId"));
+        var caseId=component.get("v.recordId");
+        //product deatils are fatching..............
+        var action = component.get("c.getAllClaimApproval");
+        
+        action.setParams({ caseId : caseId});
+        action.setCallback(this, function(response) {
+            var state = response.getState();
+            console.log('state>>>>'+state);
+            if (state === "SUCCESS") {
+                console.log("from server >>>"+JSON.stringify(response.getReturnValue()));	
+				
+                var mapApprovalWrapperRecs=response.getReturnValue();
+				
+				if(mapApprovalWrapperRecs.hasError== true){
+					component.set("v.ErrorMessage",mapApprovalWrapperRecs.errorMessage); 
+				}else{
+				component.set("v.ErrorMessage",""); 	
+                component.set("v.dependentTaskList",mapApprovalWrapperRecs.dependentTaskList );
+                component.set("v.DOApickListMap",mapApprovalWrapperRecs.mapDoalist );
+                component.set("v.DOAApproveListMap",mapApprovalWrapperRecs.mapDOA);
+                component.set("v.DependpickListMap",mapApprovalWrapperRecs.TaskPicklist);
+                component.set("v.parentFieldLabel","DOA Number");
+                component.set("v.childFieldLabel","DOA Name");
+                component.set("v.dependFieldLabel","Dependencies for Claim Processing");
+                // create a empty array for store parent picklist values 
+                var parentkeys = []; // for store all map keys 
+                var parentField = []; // for store parent picklist value to set on lightning:select. 
+                
+                var dependkeys = [];
+                var dependField = [];
+                
+                var dependentList=[];
+                for (var pickKey in mapApprovalWrapperRecs.dependentTaskList) {
+                    dependentList.push(mapApprovalWrapperRecs.dependentTaskList[pickKey].Dependencies_for_Claim_Processing__c);
+                }
+                console.log("dependentList >>>>"+JSON.stringify(dependentList));
+                component.set("v.dependentTaskPicklist",dependentList );
+                
+                // Iterate over map and store the key
+                for (var pickKey in mapApprovalWrapperRecs.mapDoalist) {
+                    parentkeys.push(pickKey);
+                }
+                 for (var pickKey1 in mapApprovalWrapperRecs.TaskPicklist) {
+                    dependkeys.push(pickKey1);
+                }
+                
+                //set the parent field value for lightning:select
+                if (parentkeys != undefined && parentkeys.length > 0) {
+                    parentField.push('--- None ---');
+                }
+                 if (dependkeys != undefined && dependkeys.length > 0) {
+                    dependField.push('--- None ---');
+                }
+                
+                for (var i = 0; i < parentkeys.length; i++) {
+                    parentField.push(parentkeys[i]);
+                }  
+                
+                for (var i = 0; i < dependkeys.length; i++) {
+                    dependField.push(dependkeys[i]);
+                } 
+                // set the parent picklist
+                component.set("v.parentList", parentField);
+                console.log(" >>>>>> parentField >>>>"+parentField);
+                component.set("v.dependList", dependField);
+                }
+            }
+            
+            else if (state === "ERROR") {
+                var errors = response.getError();
+                if (errors) {
+                    if (errors[0] && errors[0].message) {
+                        console.log("Error message: " + 
+                                    errors[0].message);
+                    }
+                } else {
+                    console.log("Unknown error");
+                }
+            }
+        });
+            $A.enqueueAction(action);
+
+        
+    }, 
+    getSalesEmpDetails : function(component, event, helper) {        
+        // salesEmpRegion        
+        // alert(component.find("SalesEmpName").get("v.value"));        
+        var selectedEmpId= component.find("SalesEmpName").get("v.value");
+        if (selectedEmpId != undefined && selectedEmpId != null && selectedEmpId != '' )            
+        {            
+            let action = component.get("c.getEmpDetails"); // Add callback behavior for when response is received
+            action.setParams({                
+                "selectedEmpId":selectedEmpId                
+            });            
+            action.setCallback(this, function(response) {                
+                let state = response.getState();                
+                if (state === "SUCCESS") {                    
+                    let resObj_Json = JSON.parse(response.getReturnValue());
+                    component.set("v.userName", resObj_Json.Name);
+                    component.set("v.userEmail", resObj_Json.Email);                    
+                } else {
+                    console.log("Failed with state: " + state);
+                }
+            }); // Send action off to be executed
+            $A.enqueueAction(action);
+        }
+    },
+    
+    showDOAnamelist : function (component, event, helper){
+        
+        component.set("v.approvalShowHide",true);
+        component.set("v.AllApprovalList",[] );
+        var controllerValue = component.find("childField").get("v.value");// We can also use event.getSource().get("v.value")
+        var pickListMap = component.get("v.DOAApproveListMap");
+        console.log(' child controllerValue >>> '+controllerValue);
+        if (controllerValue != '--None--') {
+            //get child picklist value - selectedDOAname
+            component.set("v.selectedDOAname",controllerValue);
+            var approvers = pickListMap[controllerValue].Approvers__c;
+            console.log(' approvers >>>>'+approvers);
+            var action = component.get("c.getAllApprovals");
+            action.setParams({ DOARecordId  : controllerValue , 
+                              allApprovers : approvers
+                             });
+            action.setCallback(this, function(response) {
+                var state = response.getState();
+                console.log('state>>>>'+state);
+                if (state === "SUCCESS") {
+                    console.log("from server >>>"+JSON.stringify(response.getReturnValue()));
+                    var allApprovalWrapperRec=response.getReturnValue();
+                    component.set("v.AllApprovalList",allApprovalWrapperRec );
+                    console.log(' allApprovalWrapperRec >>>'+allApprovalWrapperRec);
+                    
+                }
+                
+                else if (state === "ERROR") {
+                    var errors = response.getError();
+                    if (errors) {
+                        if (errors[0] && errors[0].message) {
+                            console.log("Error message: " + 
+                                        errors[0].message);
+                        }
+                    } else {
+                        console.log("Unknown error");
+                    }
+                }
+            });
+            
+            $A.enqueueAction(action);
+        }
+        else
+            component.set("v.approvalShowHide" , false);
+        
+    },
+    
+    dependFieldChange : function(component, event, helper) {
+        var controllerValue1 = component.find("dependField").get("v.value");// We can also use event.getSource().get("v.value")
+        var pickListMap1 = component.get("v.DependpickListMap");
+      
+        if (controllerValue1 != '--None--') {
+            //get child picklist value
+			component.set("v.selectedDependentTask",controllerValue1);
+            var childValues1 = pickListMap1[controllerValue1];
+            var childValueList1 = [];
+            if (childValues1 != undefined && childValues1.length > 0) {
+                childValueList1.push('--None--');
+               
+                  for (var i = 0; i < pickListMap1.length; i++) {  //alert('picklist value'+pickListMap1[i]);
+                    childValueList1.push(pickListMap1[i]);//dependencies for claim
+                     
+                }
+                // set the child list
+                component.set("v.dependList", childValueList1);
+                
+                if(childValues1.length > 0){
+                    component.set("v.disabledChildField1" , false);  
+                }else{
+                    component.set("v.disabledChildField1" , true); 
+                }
+            }
+        } else {
+            component.set("v.dependList", ['--None--']);
+            component.set("v.disabledChildField1" , true);
+        }
+    },
+    
+    parentFieldChange : function(component, event, helper) {
+        var controllerValue = component.find("parentField").get("v.value");// We can also use event.getSource().get("v.value")
+        var pickListMap = component.get("v.DOApickListMap");
+        console.log(controllerValue);
+        if (controllerValue != '--None--') {
+            //get child picklist value -- selectedDOAnumber
+            component.set("v.selectedDependentTask" , controllerValue);
+            component.set("v.selectedDOAnumber" , controllerValue);
+            var childValues = pickListMap[controllerValue];
+            var childValueList = [];
+            if (childValues != undefined && childValues.length > 0) {
+                childValueList.push('--None--');
+                for (var i = 0; i < childValues.length; i++) {
+                    childValueList.push(childValues[i]);//DOA_Name__c
+                }
+                // set the child list
+                component.set("v.childList", childValueList);
+                
+                if(childValues.length > 0){
+                    component.set("v.disabledChildField" , false);  
+                }else{
+                    component.set("v.disabledChildField" , true); 
+                }
+            }
+        } else {
+            component.set("v.childList", ['--None--']);
+            component.set("v.disabledChildField" , true);
+        }
+    },
+    handleDependentTaskSubmit : function (component, event, helper){
+        
+        
+       helper.createSubCaseInDependentTask(component, event, helper);
+        
+    },
+    handleApprovalSubmit : function (component, event, helper){
+        helper.createSubCaseInApprover(component, event, helper);
+        
+    },
+    //*** user lookup controller side methods used - starts ******
+    closeModeltable : function(component, event, helper) {
+        // Set isModalOpen attribute to false
+        component.set("v.modalopen",false);
+    },
+    
+    keyPressControlleruser : function(component, event, helper) {
+        // get the search Input keyword   
+        var getInputkeyWord = component.get("v.SearchKeyWord1");
+        
+        if(event.getParams().keyCode == 13){
+            
+            if( getInputkeyWord.length > 0 ){
+                helper.addinit(component, event, getInputkeyWord);
+                
+            }
+            
+        }
+         
+    },
+    
+    handleRowActionDataTable : function(component, event, helper) {
+        var action = event.getParam('action');
+        var row = event.getParam('row');
+        switch (action.name) {
+            case 'view_details':
+                //alert('row'+JSON.stringify(row));
+                var rowname = {"Name":row.Name,"Id":row.Id};
+                //alert(JSON.stringify(rowname));
+                component.set("v.SearchKeyWord1",null);
+                //component.set("v.selectedRecord" , rowname); 
+                component.set("v.selectedLookUpRecord",rowname);
+                
+                component.set("v.modalopen",false);
+                var button = component.find('buttonenabled');
+                button.set('v.disabled',false);
+                break;
+        }
+    }, 
+    updateColumnSorting: function(component, event, helper) {
+        var fieldName = event.getParam('fieldName');
+        var sortDirection = event.getParam('sortDirection');
+        // assign the latest attribute with the sorted column fieldName and sorted direction
+        component.set("v.sortedBy", fieldName);
+        component.set("v.sortedDirection", sortDirection);
+        helper.sortData(component, fieldName, sortDirection);
+    },
+    enterEvent : function(component,event,helper){
+        var openModal = event.getParam('openModalEvent');
+        var popModal = component.find("custLookup");
+        var getInputkeyWord = popModal.get("v.SearchKeyWord");
+        if(openModal){
+            helper.getAllUsersDetails(component, event, getInputkeyWord);
+            
+            component.set("v.modalopen",true);    
+        }else {
+            component.set("v.modalopen",true);    
+        }
+        
+    },
+
+    
+    handleLoadMore : function(component,event,helper){
+        if(!(component.get("v.currentCount") >= component.get("v.totalRows"))){
+            //To display the spinner
+            event.getSource().set("v.isLoading", true); 
+            //To handle data returned from Promise function
+            helper.loadData(component).then(function(data){ 
+                var currentData = component.get("v.userdatatablelist");
+                console.log('currentData'+JSON.stringify(currentData));
+                var newData = currentData.concat(data);
+                console.log('newData'+JSON.stringify(newData));
+                component.set("v.userdatatablelist", newData);
+                //To hide the spinner
+                event.getSource().set("v.isLoading", false); 
+            });
+        }
+        else{
+            //To stop loading more rows
+            component.set("v.enableInfiniteLoading",false);
+            event.getSource().set("v.isLoading", false);
+            var toastReference = $A.get("e.force:showToast");
+            toastReference.setParams({
+                "type":"Success",
+                "title":"Success",
+                "message":"All Users are loaded",
+                "mode":"dismissible"
+            });
+            toastReference.fire();
+        }
+        component.set("v.enableInfiniteLoading",true);
+    },
+    //***user lookup controller side methods used - ends******
+   
+      //This function automatic call by aur:waiting event
+    showSpinner: function(component,event,helper){
+        component.set("v.spinner",true);
+    },
+    
+    hideSpinner: function(component,event,helper){
+        component.set("v.spinner",false);
+    }
+})
+=============================
+Helper:
+({
+	getAllUsersDetails : function(component,event,getInputkeyWord){
+        component.set("v.userdatatablelist", []);
+        component.set("v.SearchKeyWord1",getInputkeyWord);
+        var action = component.get("c.fetchdatalookupValues");
+        
+        action.setParams({
+            'searchKeyWord': getInputkeyWord,
+            'initialRows' : component.get("v.initialRows"),
+            'ObjectName' : component.get("v.objectAPIName")
+          }); 
+        action.setCallback(this, function(response) {
+          $A.util.removeClass(component.find("mySpinner"), "slds-show");
+            var state = response.getState();
+            if (state === "SUCCESS") {
+                var storeResponse = response.getReturnValue();
+                component.set("v.totalRows",storeResponse.totalRecords);
+                var userresponse = response.getReturnValue().UserList;
+                for(var x=0; x<userresponse.length; x++){
+                    var returnDatas = userresponse[x];
+                    //alert('returnDatas'+JSON.stringify(returnDatas));
+                    if (returnDatas.UserRole) {
+                        returnDatas.UserRole = returnDatas.UserRole.Name;
+                     }
+                    userresponse[x].namecssclass = 'namecolor';
+                }
+                //alert('storeResponse'+JSON.stringify(storeResponse));
+                // alert('storeResponseuser'+JSON.stringify(storeResponse.UserList));
+              // if storeResponse size is equal 0 ,display No Result Found... message on screen.                }
+                if (userresponse.length > 0) {
+                    component.set("v.userdatatablelist", storeResponse.UserList);
+                   var currentdata = component.get("v.userdatatablelist");
+                } 
+            }
+             else{
+                var errors = response.getError();
+                if (errors) {
+                    component.set("v.Message",errors[0].message);
+                }
+            }
+ 
+        });
+      // enqueue the Action  
+        $A.enqueueAction(action);
+    },
+    createSubCaseInApprover : function(component, event, helper){
+         component.set("v.ErrorMessage","");
+         console.log(" >>>>>>> selectedDOAname >>>>>>>>>" + component.get("v.selectedDOAname"));
+         console.log(" >>>>>>> selectedDOAnumber >>>>>>>>>" + component.get("v.selectedDOAnumber"));
+         console.log(" >>>>>>> subCaseDesc >>>>>>>>>" + component.get("v.subCaseDesc"));
+         console.log(" >>>>>>> AllApprovalList >>>>>>>>>" + JSON.stringify(component.get("v.AllApprovalList")));
+            
+        var action = component.get("c.createSubCaseForApproval");
+        var caseId=component.get("v.recordId");
+        action.setParams({
+            'caseId': caseId,
+            'selectedDOAname' : component.get("v.selectedDOAname"),
+            'selectedDOAnumber' : component.get("v.selectedDOAnumber"),
+			'subCaseDesc' : component.get("v.subCaseDesc"),
+			'ApproverClassListStr' : JSON.stringify(component.get("v.AllApprovalList"))
+          }); 
+        action.setCallback(this, function(response) {
+         
+            var state = response.getState();
+            console.log(" >>>>>>> state >>>>>>>>>" + state);
+            if (state === "SUCCESS") {
+                var subCaseResponse = response.getReturnValue();                
+                console.log(" >>>>>>> subCaseResponse >>>>>>>>>" + subCaseResponse);
+               // redirect to Case record
+               	var navEvt = $A.get("e.force:navigateToSObject");
+                navEvt.setParams({
+                    "recordId": caseId,
+                    "slideDevName": "related"
+                });
+                navEvt.fire();
+            }
+             else{
+                var errors = response.getError();
+                if (errors) {
+                    component.set("v.ErrorMessage",errors[0].message);
+                    console.log("Error message >>"+errors[0].message);
+                }
+            }
+ 
+        });
+      // enqueue the Action  
+        $A.enqueueAction(action);
+    },
+    createSubCaseInDependentTask : function(component, event, helper){
+         component.set("v.ErrorMessage","");
+         console.log(" >>>>>>> selectedDependentTask >>>>>>>>>" + component.get("v.selectedDependentTask"));
+         console.log(" >>>>>>> TaskDesc >>>>>>>>>" + component.get("v.DependentTaskDesc"));
+         console.log(" >>>>>>> DependentTaskUser >>>>>>>>>" + JSON.stringify(component.get("v.DependentTaskUser")));
+         console.log(" >>>>>>> DependentTaskUser email>>>>>>>>>" + component.get("v.DependentTaskUser").Email);  
+        var action = component.get("c.createSubCaseforDependentTask");
+        var caseId=component.get("v.recordId");
+        action.setParams({
+            'caseId': caseId,
+            'selectedTask' : component.get("v.selectedDependentTask"),
+            'TaskDesc' : component.get("v.DependentTaskDesc"),
+			'selectedUserEmail' : component.get("v.DependentTaskUser").Email
+          }); 
+        action.setCallback(this, function(response) {
+         
+            var state = response.getState();
+            console.log(" >>>>>>> state >>>>>>>>>" + state);
+            if (state === "SUCCESS") {
+                var subCaseResponse = response.getReturnValue();                
+                console.log(" >>>>>>> subCaseResponse >>>>>>>>>" + subCaseResponse);
+               // redirect to Case record
+               	var navEvt = $A.get("e.force:navigateToSObject");
+                navEvt.setParams({
+                  "recordId": caseId,
+                  "slideDevName": "related"
+                });
+                navEvt.fire();
+            }
+             else{
+                var errors = response.getError();
+                if (errors) {
+                    component.set("v.ErrorMessage",errors[0].message);
+                    console.log("Error message >>"+errors[0].message);
+                }
+            }
+ 
+        });
+      // enqueue the Action  
+        $A.enqueueAction(action);
+    }
+})
+==================================
+style:
+.THIS .section
+{
+    width: 218px;    
+    font-size: 18px;
+    font-weight: bold;
+}
+.THIS .style
+{      
+    font-size: 20px;
+    font-weight: bold;
+}
+.THIS .back
+{
+    margin-top: -27px;
+    margin-right: 374px;
+}
+.THIS .check
+{
+    margin-left: 33px;
+    margin-top: -16px;
+    font-weight: bold;
+}
+.THIS .line
+{
+    margin-top: 10px;
+}
+.THIS .detailfont{
+  font-size: 14px;
+    font-weight: bold;
+  
+}
+
+.THIS .app{
+  
+    font-weight: bold;
+  
+}
+.THIS .bottom{
+  
+ margin-top: 111px;
+  
+}
+
+====================================
+class:
+
+public class MyCompClaimCreateSubCaseControllerLTG {
+    
+    
+    public Class MyCompClaimMapperDetails{
+		
+		@auraEnabled public Boolean hasError{get;set;}
+        @auraEnabled public String errorMessage{get;set;}
+		
+        @auraEnabled public List<MyCompClaim_Mapper__c> dependentTaskList {get;set;}
+        @auraEnabled public Map<string,MyCompClaim_Mapper__c> mapDOA {get; set;} 
+        
+        @auraEnabled public List<String> DOAnumber {get; set;} 
+        @auraEnabled public List<String> listDOAnames {get; set;} 
+        
+        @auraEnabled public Map<string, List<MyCompClaim_Mapper__c>> mapDoalist{get; set;}
+        @auraEnabled public List<String> TaskPicklist {get; set;}
+		
+		public MyCompClaimMapperDetails(Boolean hasError){
+			this.hasError=hasError;
+			if(hasError) errorMessage='Can\'t create a subCase in a Subcase ';
+			else errorMessage='';
+		}
+        public MyCompClaimMapperDetails(List<MyCompClaim_Mapper__c> dependentTaskList,List<String> DOAnumber,List<String> listDOAnames, Map<string, List<MyCompClaim_Mapper__c>> mapDoalist,List<String> TaskPicklist, Map<string,MyCompClaim_Mapper__c> mapDOA){
+            this.DOAnumber=DOAnumber;
+            this.listDOAnames = listDOAnames;
+            this.mapDoalist=mapDoalist;
+            this.TaskPicklist=TaskPicklist;
+            this.mapDOA=mapDOA;
+            this.dependentTaskList=dependentTaskList;
+			this.hasError=false;
+			this.errorMessage='';
+        }
+       
+    }
+   
+    
+    
+    //Wrapper Class to display the Approvers list
+    public class ApproverClass{
+        @auraEnabled public string level{get; set;}
+        @auraEnabled public string Approver{get; set;}
+        @auraEnabled public string ApproverEmail{get; set;}
+        @auraEnabled public User ApproverUser{get; set;}
+       
+        @auraEnabled Public boolean isUser{get; set;}
+        public approverclass(integer i,String appdetail){
+            ApproverUser = new User();
+            ApproverEmail='';
+            level = 'L'+string.valueof(i);
+            Approver = appdetail;
+            isUser = false;
+                        
+        }
+        
+    }
+    // method to check the parent case 
+    @auraEnabled
+    public static boolean hasParentCase(Id caseId){
+        
+        case rec =[Select id,Parent_Case_Number__c,MyComp_Claim__c,region__c,entitlementId,bg__c,country__c,Claim_BU__c,businesshoursId,ownerid from Case where id=:caseId];
+        if(rec.Parent_Case_Number__c !=null && rec.Parent_Case_Number__c != '' && rec.Parent_Case_Number__c!='0')
+            return true;
+        else 
+            return false;
+    } 
+    
+    @auraEnabled
+    public static MyCompClaimMapperDetails getAllClaimApproval(Id caseId){
+		if(hasParentCase(caseId)) return (new MyCompClaimMapperDetails(true)); // error message for subcase record
+
+        List<MyCompClaim_Mapper__c> listApprovals = new List<MyCompClaim_Mapper__c>();
+        Map<string,MyCompClaim_Mapper__c> mapDOA = new Map<string,MyCompClaim_Mapper__c>();
+        
+        Map<string, List<MyCompClaim_Mapper__c>> mapDoalist = new  Map<string, List<MyCompClaim_Mapper__c>>();
+        List<String> TaskPicklist= new  List<String>();
+        List<String> DOAnumber= new list<String>();
+        
+        Case dependentCase = new Case();
+        Set<string> setuniqueDOAnum = new Set<string>();
+        list<String> listDOAnames = new list<String>();
+		
+		List<MyCompClaim_Mapper__c> dependentTaskList= new List<MyCompClaim_Mapper__c>();
+        Case parentCase = [Select id,MyComp_Claim__c,region__c,entitlementId,bg__c,country__c,Claim_BU__c,businesshoursId,ownerid from Case where id=:caseId];
+        listApprovals = [select id,DOA_Name__c,DOA_Number__c,Approvers__c,Dependencies_for_Claim_Processing__c,Map_Type__c,Region__c,user_bg__c from MyCompClaim_Mapper__c where Map_Type__c = 'Approval' or Map_Type__c ='Dependent task'];
+        if(listApprovals!=null && listApprovals.size()>0){
+            DOAnumber= new list<String>();
+            TaskPicklist = new list<String>();
+            //DOAnumber.add('--None--');
+            //listDOAnames.add('--None--');
+             for(MyCompClaim_Mapper__c app: listApprovals){
+                 
+                 if(app.Map_Type__c == 'Approval'){
+                 
+                     if(app.user_bg__c == parentCase.bg__c){ // && parentCase.bg__c == 'ES'
+                         mapDOA.put(app.id,app);                       
+                       //  if(!mapDOA.containsKey(app.DOA_Number__c)){
+                       //      DOAnumber.add(new SelectOption(app.DOA_Number__c, app.DOA_Number__c));
+                       //      mapDOA.put(app.DOA_Number__c,app);    
+                       //  }
+                         list<MyCompClaim_Mapper__c> listdoanum = new list<MyCompClaim_Mapper__c>();
+                         if(!mapDoalist.containsKey(app.DOA_Number__c)){
+                             DOAnumber.add(app.DOA_Number__c);
+                             listdoanum.add(app);
+                             mapDoalist.put(app.DOA_Number__c,listdoanum);
+                         }
+                         else{
+                             listdoanum = mapDoalist.get(app.DOA_Number__c);
+                             listdoanum.add(app);
+                             mapDoalist.put(app.DOA_Number__c,listdoanum);
+                         }
+                         
+                     }
+                     else if(app.region__c == parentCase.region__c && parentCase.bg__c != 'ES' && parentCase.region__c!=null){
+                         mapDOA.put(app.id,app);
+                        // if(!mapDOA.containsKey(app.DOA_Number__c)){
+                        //     DOAnumber.add(new SelectOption(app.DOA_Number__c, app.DOA_Number__c));
+                        //     mapDOA.put(app.DOA_Number__c,app);
+                        // }
+                         list<MyCompClaim_Mapper__c> listdoanum = new list<MyCompClaim_Mapper__c>();
+                         if(!mapDoalist.containsKey(app.DOA_Number__c)){
+                             DOAnumber.add(app.DOA_Number__c);
+                             listdoanum.add(app);
+                             mapDoalist.put(app.DOA_Number__c,listdoanum);
+                         }
+                         else{                             
+                             listdoanum = mapDoalist.get(app.DOA_Number__c);
+                             listdoanum.add(app);
+                             mapDoalist.put(app.DOA_Number__c,listdoanum);
+                         }
+                     }
+                 }
+                 else if(app.Map_Type__c == 'Dependent task'){
+                     if(app.user_bg__c == parentCase.bg__c && parentCase.bg__c == 'ES'){
+                         TaskPicklist.add(app.Dependencies_for_Claim_Processing__c);
+						 dependentTaskList.add(app);
+                     }                    
+                     else if((parentCase.region__c!=null && parentCase.region__c!='WW') && app.region__c == parentCase.region__c && parentCase.bg__c != 'ES'){
+                         TaskPicklist.add( app.Dependencies_for_Claim_Processing__c);
+                         dependentTaskList.add(app);
+                     } 
+                     else if((parentCase.region__c==null || parentCase.region__c=='WW') && parentCase.bg__c != 'ES'){
+                         TaskPicklist.add(app.Dependencies_for_Claim_Processing__c);
+                         dependentTaskList.add(app);
+                     } 
+                 }
+             }
+        }
+        
+        //create wrapper to store task and approval details
+        return  (new MyCompClaimMapperDetails(dependentTaskList,DOAnumber,listDOAnames , mapDoalist,TaskPicklist,mapDOA));
+    }
+    //Method that will be called on selection of DOA Number
+    @auraEnabled
+    public static List<ApproverClass> getAllApprovals(Id DOARecordId, string allApprovers){
+        
+        String DOAapprovers='';
+        List<String> listapp = new List<String>();
+        List<ApproverClass> ApproverClassList = new List<ApproverClass>();
+        List<MyCompClaim_Mapper__c> listappr = new List<MyCompClaim_Mapper__c>();
+        //system.debug('sssssssssssssssssssssssssssnnnnn'+selectedDOAname);
+        system.debug('sssssssssssssssssssssssssss'+DOARecordId);
+        if(DOARecordId !=null){
+           // if(mapDOA.containsKey(DOARecordId)){
+                DOAapprovers = allApprovers;
+                system.debug('ddddddddddddoooooooooooooaaaaaaaaaaaaaaa'+DOAapprovers);
+                if(DOAapprovers !=null && DOAapprovers !=''){
+                    listapp = DOAapprovers.split(';');
+                }
+                if(listapp!=null && listapp.size()>0){
+                
+                    for(integer i=0; i<listapp.size(); i++){
+                        
+                        
+                        ApproverClass tempAC = new ApproverClass(i+1,listapp[i]);
+                        ApproverClassList.add(tempAC);
+                    }
+                }
+            //}
+        }
+        return ApproverClassList;
+    }
+    //user lookup method
+    @AuraEnabled
+    public static List < sObject > fetchLookUpValues(String searchKeyWord, String ObjectName) {
+        system.debug('ObjectName-->' + ObjectName);
+        String searchKey = searchKeyWord + '%';
+        List < sObject > returnList = new List < sObject > ();
+        // Create a Dynamic SOQL Query For Fetch Record List with LIMIT 5   
+        String sQuery =  'select id, Name, Email from ' +ObjectName + ' where Name LIKE: searchKey order by createdDate DESC limit 5';
+        List < sObject > lstOfRecords = Database.query(sQuery);
+        for (sObject obj: lstOfRecords) {
+            returnList.add(obj);
+        }
+        return returnList;
+    }
+    @AuraEnabled
+    public static UserWrapper fetchdatalookupValues(String searchKeyWord, String ObjectName,Integer initialRows) {
+        system.debug('ObjectName-->' + ObjectName);
+        UserWrapper accountWrapper= new UserWrapper();
+        String searchKey = searchKeyWord + '%';
+        
+        List < sObject > returnList = new List < sObject > ();
+        // Create a Dynamic SOQL Query For Fetch Record List with LIMIT 5   
+        String sQuery =  'SELECT id,Name ,Email,Business_Group__c,Global_Business_unit__c,Country,UserRole.Name from ' +ObjectName + ' where Name LIKE: searchKey order by createdDate DESC limit :initialRows OFFSET 0';
+        System.debug('sQuery'+sQuery);
+        String totaluserQuery =  'SELECT COUNT(id) TotalUsers from ' +ObjectName + ' where Name LIKE: searchKey ';
+        System.debug('totaluserQuery'+totaluserQuery);
+        accountWrapper.UserList = Database.query(sQuery);
+        // accountWrapper.totalRecords = Database.query(totaluserQuery);
+        System.debug('accountWrapper'+Database.query(sQuery));
+        
+        AggregateResult results  = Database.query(totaluserQuery);
+        System.debug('results'+results);
+        Integer totalContacts = (Integer)results.get('TotalUsers') ;
+        System.debug('totalContacts'+totalContacts);
+        accountWrapper.totalRecords =totalContacts;
+        
+        //integer count = (Integer)accountWrapper.totalRecords[0];
+        System.debug('accountWrapper'+accountWrapper);
+        return accountWrapper;
+        
+    }
+    public class UserWrapper{
+        @AuraEnabled
+        public  Integer totalRecords = 0;
+        @AuraEnabled
+        public List<sObject> UserList = new List<sObject>();
+        
+    }
+    
+    //Method to create subcases for Dependent Task
+    @auraEnabled
+    public static String createSubCaseforDependentTask(Id caseId, String selectedTask, String TaskDesc, String selectedUserEmail){
+        Case newsubCase = new Case();
+        newSubCase.recordTypeId = Case.SObjectType.getDescribe().getRecordTypeInfosByName().get('MyComp Claim').getRecordTypeId();
+        Case parentCase = [Select id,MyComp_Claim__c,region__c,entitlementId,bg__c,country__c,Claim_BU__c,businesshoursId,ownerid from Case where id=:caseId];
+        newsubcase.Parentid = caseId;
+        newSubCase.subject = selectedTask;
+        //newsubcase.Dependencies_for_Claim_Processing__c = selectedTask;
+        newsubcase.description = TaskDesc;
+        newsubcase.entitlementId = parentCase.entitlementId;
+        newsubcase.bg__c = parentCase.bg__c;
+        newsubcase.region__c = parentCase.region__c;
+        newsubcase.country__c = parentCase.country__c;
+        newsubcase.Claim_BU__c= parentCase.Claim_BU__c;
+        newsubcase.businesshoursId = parentCase.businesshoursId;
+        newsubcase.MyComp_Claim__c = parentCase.MyComp_Claim__c;
+        newsubcase.email_dependency__c = selectedUserEmail;
+       // newsubcase.ownerid = parentcase.ownerid;
+        newsubcase.Case_Origin_is_Interface__c=True;
+        newsubcase.Service_case__c='TechDirect';
+        try{
+        insert newsubcase;
+        return 'SUCCESS';
+        }
+        catch(Exception e){
+        return 'FAILURE';
+        }
+        
+    }
+    //Method to create subcases for Approval
+    @AuraEnabled
+    public static String createSubCaseForApproval(Id caseId, String selectedDOAname, String selectedDOAnumber, String subCaseDesc, String ApproverClassListStr){
+        
+        Case parentCase = [Select id,MyComp_Claim__c,region__c,entitlementId,bg__c,country__c,Claim_BU__c,businesshoursId,ownerid from Case where id=:caseId];
+        
+        List<Case> listnewsubCases = new List<Case>();
+        system.debug('dddddddddddddddddddddddd'+selectedDOAname); 
+        if(selectedDOAname==null || selectedDOAname=='' || selectedDOAname=='None'){
+            return 'Please ensure to select DOA Name';
+        }
+        if(selectedDOAnumber==null || selectedDOAnumber=='' || selectedDOAnumber=='None'){
+            return 'Please ensure to select DOA Number';
+        }
+        List<ApproverClass> ApproverClassList = (List<ApproverClass>) System.JSON.deserialize(ApproverClassListStr , List<ApproverClass>.class);
+        System.debug(' >>> ApproverClassList >>>' +ApproverClassList);
+        if(ApproverClassList!=null && ApproverClassList.size()>0){
+         /*   List<User> listUsers = new List<User>();
+            Set<id> Setuserids = new Set<id>();
+            Map<id,User> mapUserEmail = new Map<id,User>();
+            for(ApproverClass ac: ApproverClassList){
+                if(ac.approveruser.Approver_user__c!=null){
+                    SetUserids.add(ac.approveruser.Approver_user__c);     
+                }
+            }
+            if(SetUserids!=null && SetUserids.size()>0)
+                listUsers =[Select id,name,email,managerid from User where id in: SetUserids];
+            if(listUsers!=null && listUsers.size()>0){
+                for(User u: listUsers){
+                    mapUserEmail.put(u.id,u);
+                }
+            }
+            */       
+            for(ApproverClass ac: ApproverClassList){
+                Case newsubCase = new Case();
+                newSubCase.subject = 'DOA - '+selectedDOAnumber+' – '+ac.level+'-'+ac.Approver;
+                newSubCase.recordTypeId = Case.SObjectType.getDescribe().getRecordTypeInfosByName().get('MyComp Claim').getRecordTypeId();
+                newsubcase.Parentid = caseId;
+                newsubcase.description = subCaseDesc;
+                newsubcase.Email_Dependency__c = ac.ApproverUser.Email;
+                newsubcase.entitlementId = parentCase.entitlementId;
+                newsubcase.bg__c = parentCase.bg__c;
+                newsubcase.region__c = parentCase.region__c;
+                newsubcase.country__c = parentCase.country__c;
+                newsubcase.Claim_BU__c= parentCase.Claim_BU__c;
+                newsubcase.businesshoursId = parentCase.businesshoursId;
+                newsubcase.MyComp_Claim__c = parentCase.MyComp_Claim__c;
+                newsubcase.doa_number__c = selectedDOAnumber;
+               // newsubcase.ownerid = parentcase.ownerid;
+                newsubcase.Case_Origin_is_Interface__c=True;
+                newsubcase.Service_case__c='TechDirect';
+             //   system.debug('mmmmmmmmmmmmmmmmmmmmmmmmaaaaaaaaaa11a'+ac.approveruser.Approver_user__c);
+               /* if(ac.approveruser.Approver_user__c!=null){                
+                    if(mapUserEmail.containsKey(ac.approveruser.Approver_user__c)){
+                        newsubcase.Approver_Email__c = mapUserEmail.get(ac.approveruser.Approver_user__c).email;
+                    }
+                }
+                else if(ac.ApproverEmail!=null){
+                    newsubcase.Approver_Email__c = ac.ApproverEmail;
+                }*/
+                //newsubcase.MyComp_Claim__c =parentcase.MyComp_Claim__c;
+                listnewsubCases.add(newSubCase); 
+                system.debug('sssssssssssssssssssssssssssssssssss'+newSubCase);   
+            }
+            }
+        
+        try{
+            if(listnewsubCases!=null && listnewsubCases.size()>0){
+                
+                insert listnewsubCases; //-- DML Operation
+                return 'SUCCESS';
+            }
+            return 'FAILURE';
+            
+        }
+        Catch(Exception e){
+           return 'FAILURE';
+        }
+    
+    }
+}
