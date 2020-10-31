@@ -1,0 +1,98 @@
+<apex:page title="New" standardController="Account">
+<head>
+<script type='text/javascript' src='https://c.la2-c1cs-ord.salesforceliveagent.com/content/g/js/49.0/deployment.js'></script>
+</head>
+<body>
+<div id="container" style="width:60%">
+<br/>
+   <center> <h1><font size="6">Welcome <b><i><font color="blue">{!$User.FirstName} {!$User.LastName}</font></i></b> !!! </font></h1> </center>
+   <br/><br/><h2> <center>If you have any queries regarding sales compensation, you can engage with our Sales comp agents by clicking this live button</center> </h2>
+
+ <center> <a id="liveagent_button_online_5730t000000CfCt" href="javascript://Chat" style="display: none;" onclick="liveagent.startChat('5730t000000CfCt')">
+  <br/> <img src="{!$Resource.Mycompsales}"/>   
+  </a></center>
+  <div id="liveagent_button_offline_5730t000000CfCt" style="display: none;">
+  <font color="red"><center><br/><h2> {!$Label.Live_Agent_2} </h2></center></font>
+  </div>
+  
+  <script type="text/javascript">
+        if (!window._laq) { window._laq = []; }
+        window._laq.push(function(){liveagent.showWhenOnline('5730t000000CfCt', document.getElementById('liveagent_button_online_5730t000000CfCt'));
+        liveagent.showWhenOffline('5730t000000CfCt', document.getElementById('liveagent_button_offline_5730t000000CfCt'));
+        });
+  </script>
+  <br/>
+<apex:pageBlock >
+<!--<i> <br/><font size ="5" color="blue"> {!$Label.MycompLiveAgent} </font><br/></i>-->
+<!--<br/>-->
+<p>
+<font size = "2">
+<html>
+<body>
+<table border='1' cellpadding="10">
+<tr>
+    <th>
+        <font size="2">Region</font>
+    </th>
+
+    <td>
+        <b><font size="2" align="center">Sales comp live chat support availability</font></b>
+        <br/>
+    </td>
+</tr>
+<tr>
+    <th>
+        <font size="1">AMS</font>
+    </th>
+
+    <td>
+        <font size="1">8am - 5:30pm CST  M-F</font>
+        <br/>
+    </td>
+</tr>
+<tr>
+    <th>
+        <font size="1">EMEA</font>
+    </th>
+    
+    <td>
+        <font size="1">8am - 5:30pm CET  M-F</font>
+        <br/> 
+    </td>
+</tr>
+<tr>
+    <th>
+        <font size="1">APJ</font>
+    </th>
+    
+    <td>
+        <font size="1">9:00 AM to 5:00 PM SGT}</font>
+        <br/>
+    </td>
+</tr>
+</table>
+</body>
+</html>
+
+<br/>
+<!-- <font size="1">{!$Label.Live_Agent_Note}</font> -->
+<br/>
+<br/>
+<br/>
+{!$Label.Live_Agent_10}   
+<br/> <br/> {!$Label.Live_Agent_6}     
+<br/> {!$Label.Live_Agent_7} 
+<br/> {!$Label.Live_Agent_8} 
+</font>
+</P>
+</apex:pageBlock>  
+</div>
+  <script type='text/javascript'>
+      liveagent.setChatWindowHeight(700); 
+      liveagent.setChatWindowWidth(700);
+     <!-- liveagent.init('https://d.la2-c2cs-ord.salesforceliveagent.com/chat', '572G0000000PBZ2', '00D0t0000008e1I'); -->
+     liveagent.init('https://d.la2-c1cs-ord.salesforceliveagent.com/chat', '5720t000000CdZy', '00D0t0000008e1I');
+  </script>
+
+  </body>
+</apex:page>
