@@ -1,0 +1,1187 @@
+<aura:component controller="DataTableRelatedC"
+                implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+    
+    <aura:attribute type= "Case[]" name="caseList"/>
+    <aura:attribute type="MyComp_Team__c[]" name="teamList"/>   
+    
+    <aura:attribute name="ClientProgRec" type="object"/>
+    
+    <aura:attribute name="claimId" type ="string"/>
+    <aura:attribute name="orderdetailsId" type="object[]"/> 
+    <aura:attribute name="navCase" type ="string"/>
+    <aura:attribute name="columns" type="List[]"/>
+    <aura:attribute name="recordId" type="string" />
+    <aura:attribute name="caseId" type="string" />
+    <aura:attribute name="spinner" type ="boolean" default="false"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.fetchCase}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.fetchTeam}"/>
+    
+    <aura:attribute name="showError" type ="boolean" default="false"/>
+    <aura:attribute name="errorMessage" type ="string" />
+    <aura:handler name="init" value="{!this}" action="{!c.fetchAttachment}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+     <!--<aura:attribute type="ContentDocument" name="attachList"/>-->
+    <aura:attribute name="mycolumns" type="List"/>
+    <aura:attribute name="myteamcolumns" type="List"/>
+    <aura:attribute name="myattachcolumns" type="List"/>
+    
+    <!--aura attributes-->  
+    <aura:attribute name="selectedDocumentId" type="string"/>
+    <aura:attribute name="attachList" type="List"/>
+    <aura:attribute name="hasModalOpen" type="boolean" default="false"/>
+    
+    <!-- To display Attachment Section -->
+    <aura:attribute name="isAttachment" type="Boolean" default="false"/>   
+    <aura:attribute name="isMycompTeam" type="Boolean" default="false"/>   
+    <aura:attribute name="currentrecord" type="MyComp_Claim__c" />
+    
+      <aura:if isTrue="{!v.isAttachment}">
+        <!-- Attachment section START -->
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                          onclick="{! c.closeModel }"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Upload Files</h2>
+                </header>
+                <!--Modal/Popup Box Body Starts here-->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <lightning:fileUpload label="Attach receipt"
+                                          name="fileUploader" 
+                                          multiple="true" 
+                                          
+                                          recordId="{!v.recordId}" 
+                                          onuploadfinished="{!c.handleUploadFinished}" />
+                </div>
+                <!--Modal/Popup Box Footer Starts here-->
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral"
+                                      label="Cancel"
+                                      title="Cancel"
+                                      onclick="{! c.closeModel }"/>
+                    <lightning:button variant="brand"
+                                      label="OK"
+                                      title="OK"
+                                      onclick="{!c.submitDetails}"/>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+        
+        <!-- Attachment section END -->
+        
+        
+    </aura:if> 
+    
+    <lightning:card class="page">
+            <div class="slds-page-header">
+                    <div class="slds-page-header__row">
+                        <div class="slds-page-header__col-title">
+                            <div class="slds-media">
+                                <div class="slds-media__figure">
+                                    <p class="slds-text-heading_small">
+                                        <img src="{!$Resource.MyCompClaim}"></img></p></div>
+                                <div class="slds-media__body">
+                                    <p class="slds-text-title slds-line-height_reset">Salescomp Claim</p>
+                                    <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate" title="Home">New Sales Comp claim</h1> </div>
+                            </div>
+                        </div>
+                    </div>
+             </div>
+            
+         <!--Loading of spinner start-->
+    <aura:if isTrue="{!v.spinner}">
+    <div aura:id="spinnerId" class="slds-spinner_container">
+        <div class ="slds-spinner--brand slds-spinner slds-spinner--large slds-is-relative" role="alert">
+            <span class="slds-assistive-text">Loading...Please wait</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+        </div>
+    </aura:if>
+    <!--Loading of spinner end -->
+               <aura:if isTrue="{!v.showError}">
+        <!-- Show the message to ui -->
+        <div class="slds-notify slds-notify_toast slds-theme_error">
+            <span class="slds-assistive-text">ERROR</span>
+            <div class="slds-notify__content">
+            <h5 class="slds-text-heading_small slds-align_absolute-center">Error Message </h5>
+            <br/>
+            <p class="slds-align_absolute-center">{!v.errorMessage}</p>                
+            </div>
+        </div>
+    </aura:if>
+             <p class="text">Claim has been submitted for processing. At this time you can still attach file and comments to your claims</p>
+        <div class="slds-align_absolute-center" id="buttons">
+        <lightning:button variant = "brand" label = "Edit" title ="Edit" onclick = "{!c.editclaim}"/>
+        <lightning:button variant = "brand" label = "Share" title ="Share" />
+        <lightning:button variant = "brand" label = "Submit claim" title ="Submiting a claim" onclick = "{!c.submitCase}"/>
+        <lightning:button variant = "brand" label = "Void" title = "voiding" onclick = "{!c.closeModal}"/>
+        </div>
+            <div class="slds-card" id="section">    
+            <p class="heading">Sales Employee Details</p>
+            </div>
+        <lightning:recordEditform recordId="{!v.recordId}" objectApiName="MyComp_Claim__c" class="detailfont">
+            <div class="slds-grid">
+                 <div class="slds-col left1">
+                    
+                        <lightning:messages />
+                        <lightning:outputField fieldName="Submitting_Claim_on_Behalf__c"/><hr class="line"/>
+                        <lightning:inputField fieldName="Sales_Employee_Name__c" disabled="true"/><hr class="line"/>
+                        <lightning:OutputField fieldName="Sales_Employee_Email__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Sales_Employee_ID__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Region__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="BG__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="BU__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Supporting_Country__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Payroll_Country__c" />
+                        </div>
+                    
+                    <div class="slds-col right1">
+                       
+                        
+                        <lightning:inputField fieldName="Manager_Name__c" disabled="true" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Manager_Email__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Manager_Country__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Manager_Phone_num__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Compensation_Plan_Code__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Compensation_Plan_Name__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="Send_notification_to_sales_employee__c" /><hr class="line"/>
+                        <lightning:OutputField fieldName="HQ__c" /><hr class="line"/>
+                        </div> 
+                </div></lightning:recordEditform>
+        
+                <div class="slds-card" id="section">    
+                <p class="heading">Claims Details</p>
+                </div>
+         <lightning:recordEditform recordId="{!v.recordId}" objectApiName="MyComp_Claim__c" class="detailfont">
+                <div class="slds-grid">
+                 <div class="slds-col left2">
+               
+                    <lightning:messages />
+                    
+                    <lightning:OutputField fieldName="Fiscal_Period__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="ClaimType__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Claim_Status__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="AMID2__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Account_ST_ID__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Partial_Account_ST_ID__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Top_Parent_ST_ID__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="MDCP_Org_ID__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Deal_Ids__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Claim_Amount__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Partner_Location__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Partner_Country__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Special_Program__c" />
+                </div>
+                
+                 <div class="slds-col right2">
+                
+                    <lightning:OutputField fieldName="Name" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Claim_Version__c" /><hr class="line"/>
+                    <lightning:inputField fieldName="Customer_Name__c" disabled="true"/><hr class="line"/>
+                    <lightning:OutputField fieldName="Customer_Latin_Name__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Account_ST_Name__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Partial_Account_ST_Name__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Top_Parent_ST_Name__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Opportunity_Name__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="CurrencyIsoCode" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Claim_Amount_USD__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="PartnerName__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Submitted_Date__c" /><hr class="line"/>
+                </div>
+                </div>
+                    </lightning:recordEditform>
+            
+            <div class="slds-card" id="section">    
+                <p class="heading">Current case information</p>
+            </div>
+            
+            <div class="slds-grid">
+                 <div class="slds-col left3">
+                    
+                     <force:recordData aura:id="recordLoader"
+                      recordId="{!v.recordId}"
+                      fields="Current_Case__c,Id"                       
+                      targetRecord="{!v.record}"            
+                 
+                      targetFields="{!v.ClientProgRec}"
+                      recordUpdated="{!c.doInit}" />
+                     
+                     <lightning:recordViewForm recordId="{!v.recordId}"  objectApiName="MyComp_Claim__c" class="detailfont">
+                    <lightning:messages />
+                         
+                        <!--   <ui:button press="{!c.navigate}" ><lightning:OutputField fieldName="Current_Case__c" /></ui:button>-->
+                          <a onclick="{!c.navigate}" target="_blank">
+                    <lightning:OutputField aura:id ="caseNumber" fieldName="Current_Case__c"  value="{!v.navCase}"  /><hr class="line"/>
+                </a> 
+            
+                         
+                    <!-- <a onclick="{!c.handleClick}"><lightning:OutputField fieldName="Current_Case__c" /></a>    -->
+                    <lightning:OutputField fieldName="Credit_Amount_USD__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Closed_Date__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Case_Close_Comments__c" />
+                    
+                    </lightning:recordViewForm></div>
+                
+                <div class="slds-col right3">
+                    <lightning:recordEditform recordId="{!v.recordId}" objectApiName="MyComp_Claim__c" class="detailfont">
+                    <lightning:messages />
+                    <lightning:OutputField fieldName="Current_CA__c" /><hr class="line"/>
+                    <lightning:OutputField fieldName="Reason_Code__c" /><hr class="line"/>
+                    </lightning:recordEditform></div>
+                
+             </div>
+            <!-- Lightning data table -->
+            <div class="slds-card" id="section">    
+                <p class="heading">SalesComp Claim Order Details</p>
+            </div>
+            
+           <!--Approval details -->
+     <lightning:card >
+         
+     <lightning:datatable aura:id="opportunitydatatable"
+                             
+                             keyField="Id"
+                             data="{!v.orderdetailsId}"
+                             columns="{!v.columns}"
+                             hideCheckboxColumn="true"/> 
+         
+        
+    </lightning:card>
+                
+            <div class="slds-card" id="section">    
+                <p class="heading">Comments</p>
+            </div>
+             <div class="slds-col left5">
+                    <lightning:recordEditform recordId="{!v.recordId}" objectApiName="MyComp_Claim__c" class="detailfont">
+                    <lightning:messages />
+                    <lightning:OutputField fieldName="General_Comments__c"  />
+                    </lightning:recordEditform></div>
+            
+            <div class="slds-card" id="section">    
+                <p class="heading">Additional Comments</p>
+            </div>
+             <div class="slds-col left6">
+                 <span class="comment"><lightning:textarea name="input" label="Comments" aura:id="Comment"  /></span>
+                 <span><lightning:button class="slds-align_absolute-center" title="Add Comments" type="submit" onclick="{!c.addComment}">Add Comments</lightning:button> </span>
+                    <lightning:recordEditform recordId="{!v.recordId}" objectApiName="MyComp_Claim__c" class="detailfont">
+                    <lightning:messages />
+                    <lightning:inputField fieldName="Additional_Comments__c" value="{!v.addComment}" disabled="true"   style="margin-right: 243px;"/>
+                       
+                    </lightning:recordEditform></div>
+        
+        <div class="slds-card" id="section">
+            <p class="heading">System Information</p>            
+        </div>        
+        <lightning:recordViewForm recordId="{!v.recordId}" objectApiName="MyComp_Claim__c" class="detailfont">            
+            <div class="slds-grid">                
+                <div class="slds-col left7">                    
+                    <lightning:outputField fieldName="CreatedById" /><hr class="line"/>                    
+                    <lightning:outputField fieldName="LastModifiedById" /><hr class="line"/>                
+                </div>                
+                <div class="slds-col right7">                    
+                    <lightning:messages />                    
+                    <lightning:outputField fieldName="Submitted_Date__c" /><hr class="line"/>                    
+                </div>                
+            </div></lightning:recordViewForm>        
+         <div class="slds-align_absolute-center" id="buttons">
+        <lightning:button variant = "brand" label = "Edit" title ="Edit" onclick = "{!c.editclaim}"/>
+        <lightning:button variant = "brand" label = "Share" title ="Share" />
+        <lightning:button variant = "brand" label = "Submit claim" title ="Submiting a claim" onclick = "{!c.submitCase}"/>
+        <lightning:button variant = "brand" label = "Void" title = "voiding" onclick = "{!c.closeModal}"/>
+        </div>
+        
+         
+        <div class="slds-card" id="section">
+            <p class="heading">Cases</p></div>
+            
+            <lightning:datatable data="{! v.caseList }"
+                                 columns="{! v.mycolumns }"
+                                 keyField="id"
+                                 hideCheckboxColumn="true"
+                                 onrowaction="{!c.handleRowAction}"/>
+            <div class="slds-card" id="section">
+                <p class="heading">Attachments</p> </div>
+                
+               <div class="slds-align_absolute-center" id="buttons">
+            
+            <button class="slds-button slds-button_neutral" onclick="{!c.fileUpload}">Add File</button>
+            
+        </div>
+        
+        
+        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+            <thead>
+                <tr class="slds-line-height_reset">
+                    
+                    <th class="slds-text-title_caps" scope="col">
+                        <div class="slds-truncate" title="Action">Action</div>
+                    </th>
+                    
+                    <th class="slds-text-title_caps" scope="col">
+                        <div class="slds-truncate" title="Title">Title</div>
+                    </th>
+                    <th class="slds-text-title_caps" scope="col">
+                        <div class="slds-truncate" title="File Type">File Type</div>
+                    </th>
+                    <th class="slds-text-title_caps" scope="col">
+                        <div class="slds-truncate" title="Created By">Created By</div>
+                    </th>
+                    <th class="slds-text-title_caps" scope="col">
+                        <div class="slds-truncate" title="size">size(bytes)</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <aura:iteration items="{!v.attachList}" var="CD">
+                    <tr>
+                        <th scope="row">
+                            <div class="slds-truncate" title="Del">
+                                <!--store contentDocument Id in data-Id attribute-->
+                                <ui:inputCheckbox text="{!CD.Id}" aura:id="boxPack" value="" /><!--change="{!c.getDeleted}"-->
+                                
+                            </div>
+                        </th>
+                        
+                        <th scope="row">
+                            <div class="slds-truncate" title="{!CD.Title}">
+                                <!--store contentDocument Id in data-Id attribute-->
+                                <a onclick="{!c.getSelected}" data-Id="">{!CD.Title}</a>
+                            </div>
+                        </th>
+                        <th scope="row">
+                            <div class="slds-truncate" title="{!CD.FileType}">{!CD.FileType}</div>
+                        </th>
+                        <th scope="row">
+                            <div class="slds-truncate" title="{!CD.CreatedBy.Name}">{!CD.CreatedBy.Name}</div>
+                        </th>
+                        <th scope="row">
+                            <div class="slds-truncate" title="{!CD.ContentSize}">{!CD.ContentSize}</div>
+                        </th>
+                    </tr>  
+                </aura:iteration>
+            </tbody>
+        </table>
+        
+            
+            
+                                <div class="slds-card" id="section">
+                                    <p class="heading">SalesComp Claim Teams</p></div>
+                                <div class="slds-align_absolute-center" id="button1">                                    
+                                    <button class="slds-button slds-button_neutral"  target="_blank" onclick="{!c.NewMycompTeam}" >SalesComp Claim Teams</button>
+                                </div>
+                                 
+                                  
+                    <lightning:datatable data="{! v.teamList }"
+                                         columns="{! v.myteamcolumns }"
+                                         keyField="id"
+                                         hideCheckboxColumn="true"/>
+                              </lightning:card>
+    
+    
+                                        
+                    <!-- Custom DataTable to Display List Of Available ContentDocuments End-->  
+                    <!--###### FILE PREVIEW MODAL BOX START ######--> 
+                    <aura:if isTrue="{!v.hasModalOpen}">
+                        <section onclick="{!c.closeModel}"
+                                 role="dialog"
+                                 aria-modal="true"
+                                 class="slds-modal slds-fade-in-open">
+                            <div class="slds-modal__container">
+                                <div class="slds-modal__content slds-p-around_medium slds-text-align_center"
+                                     style="background: transparent;">
+                                    <div style="width: 50%; margin: 0 auto; text-align: left">
+                                        <!--<lightning:fileCard> to preview file using content document Id -->
+                                        <lightning:fileCard fileId="{!v.selectedDocumentId}"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <div class="slds-backdrop slds-backdrop_open"></div>
+                    </aura:if>
+                    <!--###### FILE PREVIEW MODAL BOX END ######-->       
+    
+</aura:component>
+
+========================================================
+controller:
+({
+    doInit : function(component, event, helper) {      
+
+         var caseNav = component.get("v.ClientProgRec.Current_Case__c");
+         console.log('current case==>'+caseNav);
+        component.set( 'v.columns', [    
+            {label: 'Transaction Number', fieldName: 'Transaction_Number__c', type: 'text', editable:'true'},    
+            {label: 'Transaction Type', fieldName: 'Transaction_Type__c', type: 'text',editable:'true'},    
+            {label: 'Order Date', fieldName: 'Order_Date__c', type: 'date', typeAttributes: {  
+                day: 'numeric',  
+                month: 'short',  
+                year: 'numeric',  
+                hour: '2-digit',  
+                minute: '2-digit',  
+                second: '2-digit',  
+                hour12: true}},   
+            {label: 'Shipment Date', fieldName: 'Shipment_Date__c', type: 'date', typeAttributes: {  
+                day: 'numeric',  
+                month: 'short',  
+                year: 'numeric',  
+                hour: '2-digit',  
+                minute: '2-digit',  
+                second: '2-digit',  
+                hour12: true}},
+            {label: 'Invoice Date', fieldName: 'Invoice_Date__c', type: 'date', typeAttributes: {  
+                day: 'numeric',  
+                month: 'short',  
+                year: 'numeric',  
+                hour: '2-digit',  
+                minute: '2-digit',  
+                second: '2-digit',  
+                hour12: true}}
+            
+        ]); 
+  var action = component.get("c.getOrderDetails");
+        action.setParams({"claimId":component.get("v.recordId")});
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            if (state === "SUCCESS") {
+                var orderIds=response.getReturnValue()
+                component.set("v.orderdetailsId", orderIds);
+                console.log('mycompOrder details '+orderIds);
+            }
+        });
+        $A.enqueueAction(action);
+    },
+     fileUpload : function(component, event, helper) {
+        alert('fileUpload method called');
+        component.set("v.isAttachment",true);       
+    },
+     
+    handleUploadFinished: function (cmp, event) {
+        
+        alert('handleUploadFinished Method called');
+        
+        var uploadedFiles = event.getParam("files");
+        
+        alert("Files uploaded");
+        
+        
+        var toastEvent = $A.get("e.force:showToast");
+        
+        toastEvent.setParams({
+            
+            title : 'Success',
+            
+            message: 'File uploaded successfully',
+            duration:' 7000',
+            key: 'info_alt',
+            type: 'success',
+            mode: 'dismissible'
+        });
+        toastEvent.fire();
+    },
+    
+    openModel: function(component, event, helper) {
+        
+        // Set isModalOpen attribute to true
+        
+        component.set("v.isAttachment", true);
+        
+    },
+    handleRowAction: function ( component, event, helper ) {
+        
+        var action = event.getParam( 'action' );
+        var row = event.getParam( 'row' );
+        var recId = row.Id;
+        
+        switch ( action.name ) {
+            case 'edit':
+                var editRecordEvent = $A.get("e.force:editRecord");
+                editRecordEvent.setParams({
+                    "recordId": recId
+                });
+                editRecordEvent.fire();
+                break;
+            case 'view':
+                var viewRecordEvent = $A.get("e.force:navigateToURL");
+                viewRecordEvent.setParams({
+                    "url": "/" + recId
+                });
+                viewRecordEvent.fire();
+                break;
+        }
+    },
+     getSelected : function(component,event,helper){
+        // display modle and set seletedDocumentId attribute with selected record Id   
+        component.set("v.hasModalOpen" , true);
+        component.set("v.selectedDocumentId" , event.currentTarget.getAttribute("data-Id")); 
+        //alert('Selected Record Id ===> '+component.get("v.selectedDocumentId"));
+        
+    },
+     editclaim : function(component, event, helper) {
+         
+         
+         var navigateEvent = $A.get("e.force:navigateToComponent");
+                navigateEvent.setParams({
+                    componentDef: "c:MyComp_ClaimCreateEditPageLightning",
+                    componentAttributes : {
+                       recordId : component.get("v.recordId") 
+                    }
+                });
+        		navigateEvent.fire(); 
+         
+     },
+    
+  /*  editclaim : function(component,event,helper){
+      var action = component.get("c.getOrderDetails");  
+        action.setParams({"claimId":component.get("v.recordId")});
+        action.setCallback(this, function(repsonse){
+            var state=response.getState();
+            if(state === "SUCCESS"){
+                var returnRecords = action.getReturnValue();
+                var navigateToEditPage =  $A.get("e.force:navigateToComponent");
+                navigateToEditPage.setParams({
+                     componentDef: "c:MyComp_ClaimCreateEditPageLightning",
+                    "claimId":component.get("v.recordId"),
+                    orderdetailsId:returnRecords
+                });
+                navigateToEditPage.fire();
+            }
+            else
+            {
+                let errors = response.getError();
+                let message = 'Unknown error'; // Default error message
+                // Retrieve the error message sent by the server
+                if (errors && Array.isArray(errors) && errors.length > 0) {
+                    message = errors[0].message;
+                }
+                // Display the message
+                console.error(message);
+                alert(message);
+            }
+        });
+        $A.enqueueAction(action);
+    }, */
+    
+     navigate : function(component, event, helper) {
+        var caseNav = component.get("v.ClientProgRec").Current_Case__c;
+         console.log('current case==>'+caseNav);
+          var navEvt = $A.get("e.force:navigateToSObject");
+    navEvt.setParams({
+      "recordId": caseNav,
+      "slideDevName": "detail"
+    });
+    navEvt.fire();
+    
+       /* alert(component.get("v.caseId"));
+        var urlEvent = $A.get("e.force:navigateToURL");
+         var myUrl = '#/sObject/' + component.find("currentCase").get("v.value")+ '/view';
+        urlEvent.setParams({
+          "url": myUrl
+        });
+        urlEvent.fire(); */
+        },
+    
+    addComment: function(component,event,helper){
+        var comments = component.find("Comment").get("v.value");
+        console.log('comments==>'+comments);
+     //  var recordId ='a9m2D0000008WydQAE';
+          var recordId =component.get("v.recordId");
+        console.log(recordId);
+       var action= component.get("c.addadditionalcomments");
+        action.setParams({ recordId:recordId , comments:comments });
+        console.log(comments);
+           action.setCallback(this, function(response){
+            var state = response.getState();
+            if (state === "SUCCESS") {
+                var comment =  response.getReturnValue();
+                component.set("v.addComment",comment);
+                console.log(comment);
+            }
+                  else
+            {
+                let errors = response.getError();
+                let message = 'Unknown error'; // Default error message
+                // Retrieve the error message sent by the server
+                if (errors && Array.isArray(errors) && errors.length > 0) {
+                    message = errors[0].message;
+                }
+                // Display the message
+                console.error(message);
+                alert(message);
+            }
+        });
+        $A.enqueueAction(action);
+    },
+    
+      NewMycompTeam : function(component,event,helper){
+        
+          //alert('Record Id - ' + component.get("v.recordId"));
+          var navigateEvent = $A.get("e.force:navigateToComponent");
+                navigateEvent.setParams({
+                    componentDef: "c:Mycomp_MyCompClaimTeamCreate",
+                    componentAttributes : {
+                       recordId :  component.get("v.recordId")
+                    }
+                });
+        		navigateEvent.fire(); 
+    },
+    
+    submitDetails: function(component,event,helper){
+        
+        component.set("v.isAttachment", false);
+        $A.get("e.force:refreshView").fire();
+    },
+    closeModel: function(component,event,helper){
+        component.set("v.isAttachment", false);
+        $A.get("e.force:refreshView").fire();
+    },
+    
+    submitCase : function(component, event, helper) {
+        console.log('submitCase method called' +component.get("v.recordId"));
+        var action = component.get("c.createCase");
+        action.setParams({
+            "MycompId" :component.get("v.recordId")
+        });
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            if (state === "SUCCESS") {
+                
+                var resp = response.getReturnValue();
+                console.log('caseId  ==> '+resp);
+                if(resp.startsWith('500')){
+                    component.set("v.caseId",resp);
+                    $A.get('e.force:refreshView').fire();
+                    
+                }
+                else{
+                component.set("v.showErrors",true);
+                component.set("v.errorMessage",response.getReturnValue());
+                }
+               
+            }
+            else
+            {
+                
+                let errors = response.getError();
+                let message = 'Unknown error'; // Default error message
+                // Retrieve the error message sent by the server
+                if (errors && Array.isArray(errors) && errors.length > 0) {
+                    message = errors[0].message;
+                }
+                // Display the message
+                console.error(message);
+                alert(message);
+            }
+        });
+        $A.enqueueAction(action);
+        
+        
+    },
+    fetchCase : function(component, event, helper) {
+        helper.fetchCaseHelper(component, event, helper);
+        
+    },
+    
+     //This function automatic call by aur:waiting event
+    showSpinner: function(component,event,helper){
+        component.set("v.spinner",true);
+    },
+    
+    hideSpinner: function(component,event,helper){
+        component.set("v.spinner",false);
+    },    
+      
+    fetchTeam : function(component, event, helper) {
+        helper.fetchTeamHelper(component, event, helper);
+    },
+    
+    fetchAttachment : function(component, event, helper) {
+        helper.fetchAttachmentHelper(component, event, helper);
+    } 
+})
+==================================
+Helper:
+
+({  
+      
+    fetchAccounts : function( component ) {  
+          
+        var action = component.get( "c.fetchAccts" );  
+        action.setCallback(this, function( response ) {    
+              
+            var state = response.getState();    
+            if (state === "SUCCESS")     
+                component.set( "v.acctList", response.getReturnValue() );                
+              
+        });    
+        $A.enqueueAction(action);   
+          
+    },  
+      
+    toastMsg : function( strType, strMessage ) {  
+          
+        var showToast = $A.get( "e.force:showToast" );   
+        showToast.setParams({   
+              
+            message : strMessage,  
+            type : strType,  
+            mode : 'sticky'  
+              
+        });   
+        showToast.fire();   
+          
+    },
+    
+    fetchTeamHelper : function(component, event, helper) {
+        
+        component.set('v.myteamcolumns', [
+            {label: 'SalesComp Team Name', fieldName: 'Name', type: 'text'},
+                {label: 'Team Member', fieldName: 'MemName', type: 'url', typeAttributes: {label: { fieldName: 'Team_Member__r.Name' }, target: '_blank'}},
+                {label: 'Team Member Role', fieldName: 'Team_Member_Role__c', type: 'text'},
+                {label: 'Access Type', fieldName: 'Access_Type__c', type: 'text'}
+            ]);
+        var action = component.get("c.fetchTeams");
+       action.setParams({
+            "MycompId" :component.get("v.recordId")
+        });
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            console.log('status value'+state);
+            if (state === "SUCCESS") {
+                var records =response.getReturnValue();
+
+                records.forEach(function(record){
+
+ record.MemName = record.Team_Member__r.Name;
+
+ });
+         component.set("v.teamList", records);
+
+            }
+        });
+        $A.enqueueAction(action);
+    }, 
+    
+    
+     fetchCaseHelper : function(component, event, helper) {
+        
+        component.set('v.mycolumns', [
+            {label: 'Case Number', fieldName: 'linkName', type: 'url', typeAttributes: {label: { fieldName: 'CaseNumber' }, target: '_blank' }},
+                {label: 'Subject', fieldName: 'Subject', type: 'text'},
+                {label: 'Status', fieldName: 'Status', type: 'Picklist'},
+                {label: 'Due Date', fieldName: 'Due_Date__c', type: 'Date/Time'},
+            {label: 'Date/Time Opened', fieldName: 'CreatedDate', type: 'Date/Time'},
+            {label: 'Owner Name', fieldName: 'OwnerId.Name', type: 'text'}
+            
+            ]);
+        var action = component.get("c.fetchCases");
+        action.setParams({
+            "MycompId" :component.get("v.recordId")
+        });
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            if (state === "SUCCESS") {
+              
+                   var records =response.getReturnValue();
+                records.forEach(function(record){
+                    record.linkName = '/'+record.Id;
+                     
+                     });
+                      component.set("v.caseList", records);
+                
+            }
+        });
+        $A.enqueueAction(action);
+    },
+    
+      fetchAttachmentHelper : function(component, event, helper) {
+        
+        component.set('v.myattachcolumns', [
+            {label: 'File Name', fieldName: 'Name', type: 'text'},
+                {label: 'Description', fieldName: 'Description', type: 'text'},
+                {label: 'Last Modified', fieldName: 'LastModifiedById', type: 'Date/Time'},
+                {label: 'Created By', fieldName: 'CreatedById', type: 'Id'},
+      
+            
+            ]);
+        var action = component.get("c.fetchAttachments");
+        action.setParams({
+            "MycompId" :component.get("v.recordId")
+        });
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            if (state === "SUCCESS") {
+              
+                   var records =response.getReturnValue();
+            console.log('attachment records ===> '+JSON.stringify(records));
+                records.forEach(function(record){
+                    record.linkName = '/'+record.Id;
+                     
+                     });
+                      component.set("v.attachList", records);
+            }
+        });
+        $A.enqueueAction(action);
+    }    
+
+      
+})
+===================
+CSS:
+.THIS .page{
+   background-color: white;
+}
+.THIS #buttons{
+    margin-bottom: 6px;
+    margin-top: 4px;
+}
+.THIS .commentBox{
+   width: 550px; height: 110px;margin-left: 308px;
+}
+.THIS .comment{
+   font-weight: bold;
+}
+
+.THIS .left1{
+   margin-left: 57px;
+}
+.THIS .left2{
+   padding-left: 57px;
+}   
+.THIS .left3{
+   padding-left: 57px;
+}  
+.THIS .left5{
+   padding-left: 57px;
+} 
+.THIS .left6{
+   padding-left: 57px;
+} 
+.THIS .left7{
+   padding-left: 57px;
+}
+.THIS .right1{
+     margin-left: 50px;
+} 
+.THIS .right2{
+     margin-left: 33px;
+}      
+.THIS .right3{
+     margin-left: -120px;
+} 
+.THIS .right7{
+     margin-right: 110px;
+} 
+.THIS #button1{
+    margin-top: -28px;
+}
+.THIS .line{
+    margin-top:5px;
+    margin-bottom:5px;
+}
+.THIS .text{
+    color: #143b24;
+}
+
+.THIS #section{
+  background-color: #0d5265;
+  
+}
+.THIS .heading{
+  color: #ffffff;
+  height: 22px;
+  padding-top: 1px;
+  padding-left: 6px;
+  font-weight: bold; 
+   font-size: 17px;
+}
+.THIS.team{
+    margin-top: -28px;
+}
+
+.THIS .detailfont{
+  font-size: 14px;
+    font-weight: bold;
+  
+}
+.THIS .attach-header{
+    font-size:20px;
+}
+
+.THIS #btnpos{
+    margin-top: 39px;
+}
+.THIS #button1{
+    margin-top: 5px;
+}
+
+========================
+class:public class DataTableRelatedC {
+    
+   @AuraEnabled    
+    public static List < MyComp_Claim_Order_Detail__c > getContacts() {    
+            List<MyComp_Claim_Order_Detail__c> conList= [SELECT Id,MyComp_Claim__r.Name,Transaction_Number__c,Transaction_Type__c,Order_Date__c,Invoice_Date__c,Shipment_Date__c FROM MyComp_Claim_Order_Detail__c ];    
+        
+            return conList;
+    }
+
+  @AuraEnabled  
+  public static string addadditionalcomments(string recordId, string comments){
+      Id claimId;
+     system.debug('ID=============>'+recordId);
+      string additionalComments; 
+     // list <MyComp_Claim__c> claimObj;
+       User loggedinUser = [select id,Name,email,Profile.Name from user where id=:userinfo.getuserid()];
+       MyComp_Claim__c claimObj =  [Select id,name,MyComp_Claim_Case__r.Close_Comments__c,Additional_Comments__c from MyComp_Claim__c where id =:recordId];
+      
+        
+      if(claimObj != null){
+          
+          try{
+        
+            // claimObj.CommentsAddedOnDetailPage__c = additionalComments;
+            if(claimObj.Additional_Comments__c!=null){
+                claimObj.Additional_Comments__c = system.now()+' GMT'+' '+loggedinUser.Name+'\n'+comments+'\n'+'-------------------'+'\n'+ claimObj.additional_comments__c;
+                
+            }
+            else{
+                claimObj.Additional_Comments__c = system.now()+' GMT'+' '+ loggedinUser.Name+'\n'+comments;            
+            }
+                
+            update claimObj;
+            system.debug('comments===>'+claimObj);
+           // additionalcomments=null;
+        
+        
+        }
+        Catch(Exception e){
+            claimObj.Additional_Comments__c = null;
+             ApexPages.Message myMsg = new ApexPages.Message(ApexPages.Severity.ERROR,'You do not have permission to edit this Record.');
+            ApexPages.addMessage(myMsg);
+            
+        }
+      }
+        
+     return claimObj.Additional_Comments__c;
+  }
+    
+   @AuraEnabled
+    public static List <MyComp_Claim_Team__c> fetchTeams(string MycompId) {
+        
+        system.debug('MycompId  ===> '+MycompId);
+        List<MyComp_Claim_Team__c> teamList ;
+        if(string.isNotEmpty(MycompId))
+        {
+            teamList= [SELECT Name,Team_Member__r.Name,Team_Member_Role__c,Access_Type__c from MyComp_Claim_Team__c where MyComp_Claim__c=:MycompId ];
+        }
+        
+        
+        return teamList;
+    }   
+      @AuraEnabled
+    public static Id  createMyCompTeam(String MycompId)
+    {
+        system.debug('fetchTeams  ==> MycompId  ===> '+MycompId); 
+        List<MyComp_Claim_Team__c> teamList ;
+        if(string.isNotEmpty(MycompId))
+        {
+            teamList= [SELECT Name,Team_Member__r.Name,Team_Member_Role__c,Access_Type__c from MyComp_Claim_Team__c where MyComp_Claim__c=:MycompId ];
+        }
+        return null;
+    }
+
+    
+    @AuraEnabled
+    public static List <Case> fetchCases(string MycompId) {
+        List<Case> caseList;
+        system.debug('MycompId ==> '+MycompId);
+        if(string.isNotEmpty(MycompId))
+        {
+            caseList = [SELECT Id,CaseNumber,Subject,Status,Due_Date__c,CreatedDate,Owner.name from Case where MyComp_Claim__c=:MycompId ];
+        }
+        
+        
+        return caseList;
+    }
+    @AuraEnabled
+    public static list<MyComp_Claim_Order_Detail__c> getOrderDetails(string claimId){
+        
+        list<MyComp_Claim_Order_Detail__c> orderDetails = new list<MyComp_Claim_Order_Detail__c>();
+        list<string> orderdetailsId = new list<string>();
+        if(claimId != null){
+            
+            orderDetails=[SELECT Id, Transaction_Type__c, Transaction_Number__c, Order_Date__c, Shipment_Date__c, Invoice_Date__c FROM MyComp_Claim_Order_Detail__c WHERE MyComp_Claim__c=:claimId];
+        }
+        /*for(MyComp_Claim_Order_Detail__c order:orderDetails){
+            
+            orderdetailsId.add(order.Id);
+        } */
+        return orderDetails;
+    }
+    
+     @AuraEnabled
+    public static List <ContentDocument> fetchAttachments(string MycompId){ 
+        system.debug('fetchAttachments Method Called');
+        system.debug('fetchAttachments ==> MycompId ==> '+MycompId);
+       List<ContentDocumentLink> cdl = new List<ContentDocumentLink>();
+        set<string> ContentDocumentIds = new set<string>();
+        List<ContentDocument> attachlist = new List<ContentDocument>();
+        if(string.isNotEmpty(MycompId))
+        {
+             cdl =[SELECT id,LinkedEntityId,ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId =:MycompId]; 
+        system.debug('cdl size() ==> '+cdl.size());
+        }
+        
+        if(cdl.size() > 0)
+        {
+            for(ContentDocumentLink cd : cdl)
+            {
+                ContentDocumentIds.add(cd.ContentDocumentId);
+            }
+        }
+        
+        if(ContentDocumentIds.size() > 0)
+        {
+            attachlist = [Select id,Title,FileType,CreatedBy.Name,ContentSize From contentDocument WHERE id IN :ContentDocumentIds];
+        }
+        system.debug('attachlist size ==> '+attachlist.size());
+        
+        if(attachlist.size() > 0)
+        {
+            return attachlist;
+        }
+        
+        return attachlist;
+        
+    }
+    
+    @AuraEnabled
+    public static string getDeleted(string AttachmentId){   
+        system.debug('getDeleted Method is called'+AttachmentId);
+        List<ContentDocument> attachlist;
+        if(string.isNotEmpty(AttachmentId))
+        {
+            attachlist = [Select id,Title,FileType,CreatedBy.Name,ContentSize From contentDocument WHERE id =: AttachmentId];
+        }
+        if(attachlist.size() >0 )
+        {
+            delete attachlist;
+            return 'deleted';
+        }
+        
+        return 'deleted';
+    }
+    
+    
+    
+    @AuraEnabled
+       public static string createCase(string MycompId){
+        Savepoint sp1;
+		 List<BusinessHours> listbusinesshours = [Select id, name from BusinessHours where name ='MyComp China' or name='MyComp Mexico' or name='MyComp Poland'];
+		 string returnstr;
+		MyComp_Claim__c claimObj = [SELECT ID, Name, ClaimType__c,region__c, Special_Program__c,Supporting_Country__c,BG__c,BU__c, Sales_Employee_Email__c, Claim_Status__c, Submitted_Date__c, MyComp_Claim_Case__c, Current_CA_Email__c FROM MyComp_Claim__c WHERE Id =:MycompId];
+        try{
+        //RecordType rt = [Select Id From RecordType Where Name = 'MyComp Claim' And SobjectType = 'Case'];
+        list<Attachment> att = new list<Attachment>();
+        integer count=0;
+        if(claimObj.ClaimType__c=='International'||(claimObj.region__c=='EMEA'&& claimObj.Special_Program__c=='Non reporting channel partner transaction')||(claimObj.region__c=='AMS'&& claimObj.ClaimType__c=='Indirect' && claimObj.Special_Program__c=='Non reporting channel partner transaction')){
+             att=[select id from attachment where ParentId =: claimObj.id];
+        if(att!=null && att.size()>0)
+            count=0;
+        else if(claimObj.ClaimType__c=='International')
+            count=1;
+        else if(claimObj.region__c=='EMEA')
+            count=2;
+        else
+            count=3;
+        }
+        if(count==0){ 
+        Id rt = Case.SObjectType.getDescribe().getRecordTypeInfosByName().get('MyComp Claim').getRecordTypeId();
+        integer caseCount = [Select count() from Case where MyComp_Claim__c=:claimObj.id];
+        
+        Case objCase = new Case(MyComp_Claim__c=claimObj.id,RecordTypeId = rt,Claim_BU__c= claimObj.BU__c,EntitlementId=label.MyCompClaim_Entitlement_id,Country__c=claimObj.Supporting_Country__c, BG__c=claimObj.BG__c, Region__c=claimObj.region__c);
+        objCase.Service_Case__c = 'TechDirect';
+        if(caseCount==0 || caseCount==null){
+        objCase.ClaimCase_Version__c='V'+caseCount;
+        }
+        else{
+        //caseCount=caseCount+1;
+        objCase.ClaimCase_Version__c='V'+caseCount;
+        }
+        objCase.Subject=claimObj.name+' - '+objCase.ClaimCase_Version__c+' - Submitted';
+        objCase.MyCompClaim_Sales_Employee_Email__c = claimObj.Sales_Employee_Email__c;
+        //populate business hours
+        if(listbusinesshours!=null && listbusinesshours.size()>0){
+            for(BusinessHours bh:listbusinesshours){
+                if(claimObj.region__c == 'APJ' && bh.name=='MyComp China'){
+                    objCase.BusinessHoursId = bh.id;    
+                }
+                else if(claimObj.region__c == 'AMS' && bh.name=='MyComp Mexico'){
+                    objCase.BusinessHoursId = bh.id;
+                }
+                else if(claimObj.region__c == 'EMEA' && bh.name=='MyComp Poland'){
+                    objCase.BusinessHoursId = bh.id;
+                }
+            }
+        }
+        sp1 = Database.setSavepoint();
+        //Fetching the assignment rules on case
+        AssignmentRule AR = new AssignmentRule();
+        AR = [select id from AssignmentRule where SobjectType = 'Case' and Active = true limit 1];
+        
+        //Creating the DMLOptions for "Assign using active assignment rules" checkbox
+        Database.DMLOptions dmlOpts = new Database.DMLOptions();
+        dmlOpts.assignmentRuleHeader.assignmentRuleId= AR.id;
+        objCase.setOptions(dmlOpts);
+        
+        insert objCase;
+        
+        Case c = [Select id,ownerid,owner.email,owner.type from Case where id=:objCase.id];
+        claimObj.Claim_Status__c='Submitted';
+        claimObj.Submitted_Date__c=system.now();
+        claimObj.MyComp_Claim_Case__c=objCase.id;
+        if(c.owner.type=='User'){
+            claimObj.Current_CA_Email__c=c.owner.email;    
+        }
+        update claimObj;     
+        
+        
+       returnstr = objCase.id;
+       
+        }
+        else if(count==1){
+           returnstr =  label.MyCompClaimInternationalAttachmentMessage ; 
+            //return returnstr;        
+
+        }
+        else if(count==2){
+            returnstr = label.MyCompClaimNonReportingChannelPartnerAttachmentMessage; 
+            //return returnstr;        
+
+        }
+        else if(count==3){
+           returnstr =  label.MyCompClaimAMSIndirectAttachmentLabel; 
+           // return returnstr;        
+
+        }
+        return returnstr;
+        }
+        Catch(Exception e){
+             Database.RollBack(sp1);
+            
+			 returnstr = 'You do not have permission to edit this Record.';
+             
+         return returnstr;
+        }
+        
+    }
+}
