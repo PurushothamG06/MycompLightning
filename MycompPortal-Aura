@@ -1,0 +1,748 @@
+Component:
+
+<aura:component implements="force:appHostable,flexipage:availableForRecordHome,force:hasRecordId,lightning:isUrlAddressable,lightning:actionOverride" access="global" controller="SalesCompPortalLightning" >
+    
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>    
+    <aura:attribute name="salescompmessage" type="Object"/>
+
+    <aura:attribute name ="salescomptoolsLabel1" type ="String"/>
+    <aura:attribute name ="salescomptoolsLabel2" type ="String"/>
+    <aura:attribute name ="salescomptoolsLabel3" type ="String"/>
+    <aura:attribute name ="salescomptoolsLabel4" type ="String"/>
+    
+    <aura:attribute name ="salescomptools1" type ="String"/>
+    <aura:attribute name ="salescomptools2" type ="String"/>
+    <aura:attribute name ="salescomptools3" type ="String"/>
+    <aura:attribute name ="salescomptools4" type ="String"/>
+    
+    <aura:attribute name ="salescomplinkslabel1" type ="String"/>
+    <aura:attribute name ="salescomplinkslabel2" type ="String"/>
+    <aura:attribute name ="salescomplinkslabel3" type ="String"/>
+    <aura:attribute name ="salescomplinkslabel4" type ="String"/>
+    <aura:attribute name ="salescomplinkslabel5" type ="String"/>
+    
+    <aura:attribute name ="salescomplinks1" type ="String"/>
+    <aura:attribute name ="salescomplinks2" type ="String"/>
+    <aura:attribute name ="salescomplinks3" type ="String"/>
+    <aura:attribute name ="salescomplinks4" type ="String"/>
+    <aura:attribute name ="salescomplinks5" type ="String"/>
+    
+    <aura:attribute name ="salescomplinks" type ="Object"/>
+    <aura:attribute name ="salescomptop" type ="Object"/>
+    
+  <div class="page">
+  <div class="backgrd">
+       <div class="header">
+            
+            
+  <p class="head" >
+      <span class="slds-p-left_large"></span> <span class="logo"> <img src="{!$Resource.HPElogo}" /></span> <span class ="hpe">HPE </span> SalesComp Gateway</p>
+ </div>
+  
+  <div class="message">
+     
+      <p><span class="alert"> <img src="{!$Resource.alert}" /></span><aura:iteration items="{!v.salescompmessage}"  var="salescomp">
+          <span>Alert:</span> &nbsp;
+          <span style="{! 'color:' + salescomp.ColourForMessage__c }">{!salescomp.Warning_Message__c} </span>
+        
+        </aura:iteration></p>
+      
+    </div>
+    <br></br>
+     <div class="slds-col sfdc heading">
+                        <span>Sales Comp Tools</span>
+                         </div>
+         
+                 <br></br>
+   
+ 
+      <br></br>
+      
+            <div class="slds-grid slds-gutters" id="disk" >
+                   
+                   <div class="slds-col" id="grid1" >
+              <lightning:card  class="disk1"><a href ="{!v.salescomptools1}" target="_blank"  onclick="{!c.trackUsage}" data-sale="{!v.salescomptoolsLabel1}" data-section="Sales Comp Tools">
+                 <span class="slds-p-left_large"></span> <img src="{!$Resource.disk1}" />
+      <div slot="title" >
+    <p class="slds-text-heading_large" id="tool1" >{!v.salescomptoolsLabel1}</p>
+                  </div><img src="{!$Resource.Rarrow}" class="slds-float--right" onclick="{!c.trackUsage}" data-sale="{!v.salescomptoolsLabel1}" data-section="Sales Comp Tools"/></a></lightning:card></div>
+                  
+                   <div class="slds-col" id="grid2">
+                   <lightning:card  class="disk2"><a href ="{!v.salescomptools2}" target="_blank" onclick="{!c.trackUsage}" data-sale="{!v.salescomptoolsLabel2}" data-section="Sales Comp Tools">
+                     <span class="slds-p-left_large"></span>  <img src="{!$Resource.disk2}"/>
+      <div slot="title">
+    <p class="slds-text-heading_large" id="tool">{!v.salescomptoolsLabel2}</p>
+                       </div><img src="{!$Resource.Rarrow}" class="slds-float--right" onclick="{!c.trackUsage}" data-sale="{!v.salescomptoolsLabel2}" data-section="Sales Comp Tools"/></a></lightning:card></div>
+                       
+                   <div class="slds-col" id="grid3">
+         <lightning:card  class="disk3"><a href ="{!v.salescomptools3}" target="_blank" onclick="{!c.trackUsage}" data-sale="{!v.salescomptoolsLabel3}" data-section="Sales Comp Tools">
+            <span class="slds-p-left_large"></span> <img src="{!$Resource.disk3}"/>
+      <div slot="title">
+    <p class="slds-text-heading_large" id="tool3">{!v.salescomptoolsLabel3}</p>
+             </div><img src="{!$Resource.Rarrow}" class="slds-float--right" onclick="{!c.trackUsage}" data-sale="{!v.salescomptoolsLabel3}" data-section="Sales Comp Tools"/></a></lightning:card></div>
+             
+                   <div class="slds-col" id="grid4">
+              <lightning:card  class="disk4"><a href ="javascript:void(0)" onclick="{!c.navigateToClaims}" data-sale="{!v.salescomptoolsLabel4}" data-section="Sales Comp Tools"> 
+              <span class="slds-p-left_large"></span>  <img src="{!$Resource.disk4}"/>
+      <div slot="title">
+    <p class="slds-text-heading_large" id="tool4">{!v.salescomptoolsLabel4}</p>
+                  </div><img src="{!$Resource.Rarrow}" class="slds-float--right" onclick="{!c.navigateToClaims}" data-sale="{!v.salescomptoolsLabel4}" data-section="Sales Comp Tools" />
+                  </a></lightning:card></div>
+                  
+               </div>
+          
+ <!-- Teja's component -->   
+    
+   <div class="slds-grid slds-gutters" id="grid">
+<div class="slds-col" id="col">
+     <lightning:card  class="card">
+      <div slot="title">
+    <p class="slds-text-heading_large" id="heading">Sales Comp Links</p>
+          <hr  class="line2"></hr>
+       </div>
+       
+    <div class="link1">
+<span class="slds-p-left_large"></span>
+         <img src="{!$Resource.apps}" />
+        <span class="slds-p-left_large"></span>
+        <a href="{!v.salescomplinks1}" target="_blank" class="slds-text-link" onclick="{!c.trackUsage}" data-sale="{!v.salescomplinkslabel1}" data-section="Sales Comp Links">{!v.salescomplinkslabel1}</a></div>
+           <hr  class="line"></hr>
+      
+       <div class="link1">
+<span class="slds-p-left_large"></span>
+            <img src="{!$Resource.report}"  />
+        <span class="slds-p-left_large"></span>
+           <a href="{!v.salescomplinks2}" target="_blank" class="slds-text-link" onclick="{!c.trackUsage}" data-sale="{!v.salescomplinkslabel2}" data-section="Sales Comp Links">{!v.salescomplinkslabel2}</a></div>
+       <hr class="line"></hr>
+      
+       <div class="link1">
+<span class="slds-p-left_large"></span>
+            <img src="{!$Resource.report}"  />
+        <span class="slds-p-left_large"></span>
+    <a href="{!v.salescomplinks3}" target="_blank" class="slds-text-link" onclick="{!c.trackUsage}" data-sale="{!v.salescomplinkslabel3}" data-section="Sales Comp Links">{!v.salescomplinkslabel3}</a></div>
+        <hr class="line"></hr>
+       
+        <div class="link1">
+<span class="slds-p-left_large"></span>
+            <img src="{!$Resource.report}"/>
+        <span class="slds-p-left_large"></span>
+    <a href="{!v.salescomplinks4}" target="_blank" class="slds-text-link" onclick="{!c.trackUsage}" data-sale="{!v.salescomplinkslabel4}" data-section="Sales Comp Links">{!v.salescomplinkslabel4}</a></div>
+        <hr class="line"></hr>
+       
+        <div class="link1">
+<span class="slds-p-left_large"></span>
+            <img src="{!$Resource.ribbon}"  />
+        <span class="slds-p-left_large"></span>
+    <a href="{!v.salescomplinks5}" target="_blank" class="slds-text-link" onclick="{!c.trackUsage}" data-sale="{!v.salescomplinkslabel5}" data-section="Sales Comp Links">{!v.salescomplinkslabel5}</a></div>
+        <hr class="line"></hr>
+    </lightning:card>
+       </div>
+  
+   
+   
+
+       
+       
+<div class="slds-col" id="col2">
+ <lightning:card   class="card2">
+       <div slot="title">
+    <p class="slds-text-heading_small" id="heading2" >Top Five How To's</p>
+           <hr  class="line3"></hr>
+</div>
+         
+    <div class="link1"/> <aura:iteration items = "{!v.salescomptop}" var="tops">
+
+
+ <span class="slds-p-left_small"/>
+
+
+
+<lightning:icon iconName="utility:knowledge_base" class="icon" />
+
+ <span class="slds-p-left_small"/>
+
+ <a href ="{!tops.Link_URL__c}" target="_blank" class="slds-text-link" style="color: black" onclick="{!c.trackUsage}" data-sale="{!tops.Display_Link_Name__c}" data-section="Top Five How To">{!tops.Display_Link_Name__c}</a>
+
+
+
+<hr class="line2"></hr>
+
+ </aura:iteration>
+
+    </lightning:card>
+       </div>
+    </div>
+ 
+    
+     
+
+
+       <br></br>
+    <br></br>
+      <div class="slds-box slds-box_small size" id="chatbox">
+    
+<p class="prgh">Have a Question or Need Support?</p>
+             <br></br>
+             <span>
+             <a href="javascript:void(0);" class="slds-text-link chat" onclick="{!c.navtopage}" target="_blank" ><span><img src="{!$Resource.asksalescomp}" class="chat1" onclick="{!c.navtopage}" target="_blank"/></span>Ask Sales Comp</a> 
+             <span class="slds-p-left_large"></span>
+                 <span class="slds-p-left_large"></span>
+                 
+          <a href="javascript:void(0);" class="slds-text-link chat" ><span><img src="{!$Resource.chatbox}" class="chat2" /></span>Chat with an agent</a>
+            </span>   
+   
+        </div><br></br>
+      <span class="hewlett"><img src="{!$Resource.copyright}" class="copy"/>2020 Hewlett Packard Enterprise Development LP</span>
+    </div>
+    </div> 
+</aura:component>
+
+
+----------------------------------------------
+Apex class:
+
+public class SalesCompPortalLightning {
+    
+      @AuraEnabled
+    public static String Salescomp(){
+        
+        system.debug('entering this function');
+      List<MyCompClaim_Mapper__c> listMapper = new List<MyCompClaim_Mapper__c>();
+      listMapper=[select id,user_bg__c,country__c,FontStylforMessage__c, warning_message__c,FontSizeforMessage__c,
+                  start_date__c,End_date__c, ColourForMessage__c,map_type__c,Region__c,
+                  order_of_display__c, Display_Link_Name__c, Link_URL__c 
+                  from MyCompClaim_Mapper__c where (map_type__c='Lightning-SalesComp-Messages' or map_type__c='Lightning-SalesComp-Tools' or map_type__c='Lightning-SalesComp-Links' or map_type__c='Lightning-SalesCompTop5-Links')
+                  order by order_of_display__c NULLS LAST];
+        User loggedinUser = [Select id,name,Business_Group__c,Employee_Country__c, Region__c from user where id=: userinfo.getUserid()];
+       if(loggedinUser.Business_Group__c=='PointNext' || loggedinUser.Business_Group__c=='TS' ||loggedinUser.Business_Group__c=='ESSN'){
+            loggedinUser.Business_Group__c='Hybrid IT';
+        }
+          
+
+     List<MyCompClaim_Mapper__c> listMessages = new List<MyCompClaim_Mapper__c>();
+        List<MyCompClaim_Mapper__c> listTools = new List<MyCompClaim_Mapper__c>();
+        List<MyCompClaim_Mapper__c> listLinks = new List<MyCompClaim_Mapper__c>();
+         List<MyCompClaim_Mapper__c> listTop = new List<MyCompClaim_Mapper__c>();
+      
+  if(listMapper!=null && listMapper.size()>0){
+            for(MyCompClaim_Mapper__c mapper: listMapper){
+                if(mapper.map_type__c == 'Lightning-SalesComp-Messages' ){
+                   
+                    if(loggedinUser.Region__c == mapper.region__c || mapper.region__c == 'AMS' || mapper.region__c==null){
+                        
+                           
+                                if(mapper.start_date__c!=null && mapper.end_date__c!=null){
+                                    
+                                    if(mapper.start_date__c<= system.today() && system.today()<=mapper.End_date__c){
+                                        listMessages.add(mapper);
+                                    }
+                                }
+                                 
+                            
+                        
+                    } 
+                } 
+                
+                
+                 if(mapper.map_type__c == 'Lightning-SalesComp-Tools' ){
+                   
+                    if(loggedinUser.Region__c == mapper.region__c || mapper.region__c == 'AMS' || mapper.region__c==null){
+                        
+                         listTools.add(mapper);  
+                    }   
+                 }
+                     
+                if(mapper.map_type__c == 'Lightning-SalesComp-Links' ){
+                   
+                    if(loggedinUser.Region__c == mapper.region__c || mapper.region__c == 'AMS' || mapper.region__c==null){
+                        
+                         listLinks.add(mapper);  
+                    }  
+                        
+                
+                 } 
+                 if(mapper.map_type__c == 'Lightning-SalesCompTop5-Links' ){
+                   
+                    if(loggedinUser.Region__c == mapper.region__c || mapper.region__c == 'AMS' || mapper.region__c==null){
+                        
+                         listTop.add(mapper);  
+                    }  
+                        
+                
+                 } 
+                   
+               
+            
+  }
+  
+    
+                }
+
+        String JSONString='';
+        
+        JSONString = '{ "SalesCompMessages":' + JSON.serialize(listMessages) + ', "SalesCompTools":'+ JSON.serialize(listTools) + ',"SalesCompLinks":' + JSON.serialize(listLinks) + ',"SalesCompTop":' + JSON.serialize(listTop) + '}';
+        system.debug('SalesCompRecs'+JSONString);
+        return JSONString;
+                       
+}
+    @AuraEnabled
+    public static void SalescompTrackRecord(String linkname, String sectionname){
+        system.debug('the value is'+linkname+','+sectionname);
+        User loggedinUser = [Select id,name,Business_Group__c,Employee_Country__c, Region__c from user where id=: userinfo.getUserid()];
+        Group GroupList = [select id,Name from Group where Name='MyComp Usage Tracker Super User'];
+        try{
+            Usage_Tracker__c MyCompTracker = new Usage_Tracker__c ();
+            MyCompTracker.Description__c= linkname;
+            MyCompTracker.User__c= loggedinUser.id;
+            MyCompTracker.Team__c = 'SalesComp';
+            MyCompTracker.Page__c = sectionname;
+            MyCompTracker.OwnerId = GroupList.Id;
+            insert MyCompTracker;
+        }
+        catch(Exception ex){
+            System.debug('exception'+ex);
+        }
+
+    }
+    
+}
+
+-------------------------------------------
+Controller:
+
+({
+    doInit: function(component, event, helper) {
+       let action = component.get("c.Salescomp");
+       
+        action.setCallback( this, function( response ) {
+            let state = response.getState();
+           
+            if (state === "SUCCESS") {
+               
+                
+                console.log(response.getReturnValue());
+               let resObj_Json = JSON.parse(response.getReturnValue());
+              
+                var salescompmessage = resObj_Json.SalesCompMessages; 
+                var salescomptools = resObj_Json.SalesCompTools; 
+                var salescomplinks = resObj_Json.SalesCompLinks;
+                var salescomptop = resObj_Json.SalesCompTop;
+                
+                 for(var i in salescomptools){
+                    if(salescomptools[i].Order_of_Display__c == '1'){
+                        component.set("v.salescomptools1",salescomptools[i].Link_URL__c);
+                        component.set("v.salescomptoolsLabel1",salescomptools[i].Display_Link_Name__c);
+                    }
+                   
+                    else if(salescomptools[i].Order_of_Display__c == '2'){
+                        component.set("v.salescomptools2",salescomptools[i].Link_URL__c);
+                        component.set("v.salescomptoolsLabel2",salescomptools[i].Display_Link_Name__c);
+                    }
+                    else if(salescomptools[i].Order_of_Display__c == '3'){
+                        component.set("v.salescomptools3",salescomptools[i].Link_URL__c);
+                        component.set("v.salescomptoolsLabel3",salescomptools[i].Display_Link_Name__c);
+                    }
+                    else if(salescomptools[i].Order_of_Display__c == '4'){
+                       // component.set("v.salescomptools4",salescomptools[i].Link_URL__c);
+                        component.set("v.salescomptoolsLabel4",salescomptools[i].Display_Link_Name__c);
+                    }
+                }
+             
+            for(var j in salescomplinks){
+                    
+                     if(salescomplinks[j].Order_of_Display__c == '1'){
+                    
+                     component.set("v.salescomplinks1",salescomplinks[j].Link_URL__c);
+                       component.set("v.salescomplinkslabel1",salescomplinks[j].Display_Link_Name__c);  
+                    
+                     }
+                    
+                     else if(salescomplinks[j].Order_of_Display__c == '2'){
+                    
+                     component.set("v.salescomplinks2",salescomplinks[j].Link_URL__c);
+                         component.set("v.salescomplinkslabel2",salescomplinks[j].Display_Link_Name__c);
+                    
+                     }
+                    
+                     else if(salescomplinks[j].Order_of_Display__c == '3'){
+                    
+                     component.set("v.salescomplinks3",salescomplinks[j].Link_URL__c);
+                         component.set("v.salescomplinkslabel3",salescomplinks[j].Display_Link_Name__c);
+                    
+                     }
+                    
+                     else if(salescomplinks[j].Order_of_Display__c == '4'){
+                    
+                     component.set("v.salescomplinks4",salescomplinks[j].Link_URL__c);
+                         component.set("v.salescomplinkslabel4",salescomplinks[j].Display_Link_Name__c);
+                    
+                     }
+                     else if(salescomplinks[j].Order_of_Display__c == '5'){
+                    
+                     component.set("v.salescomplinks5",salescomplinks[j].Link_URL__c);
+                         component.set("v.salescomplinkslabel5",salescomplinks[j].Display_Link_Name__c);
+                    
+                     }
+                 }
+                
+                
+                
+                component.set("v.salescompmessage",salescompmessage);
+                component.set("v.salescomplinks",salescomplinks);
+                component.set("v.salescomptop",salescomptop);
+               
+         }         
+              
+})
+        $A.enqueueAction(action);
+},
+    
+    navigateToClaims:function(component,event,helper){
+        var SalesTools = event.currentTarget.dataset.sale;
+        var SalesTools1 = event.currentTarget.dataset.section;
+        alert('monkeyLove : '+SalesTools);
+        alert('Section is : '+SalesTools1);
+        
+    var navigateEvent = $A.get("e.force:navigateToComponent");
+        navigateEvent.setParams({
+            componentDef: "c:mycompnew"
+            
+        });
+        navigateEvent.fire(); 
+        alert("going to claims portal");
+    },
+    
+       trackUsage: function(component,event,helper){
+    var action = component.get("c.SalescompTrackRecord");
+    var SalesTools1 = event.currentTarget.dataset.sale;
+    var SalesTools2 = event.currentTarget.dataset.section;
+    alert("SalesTools1"+SalesTools1);
+    alert("SalesTools2"+SalesTools2);
+    action.setParams({"linkname":SalesTools1,"sectionname":SalesTools2})
+    action.setCallback(this, function(response) {
+    console.log(response.getReturnValue());
+    });
+    $A.enqueueAction(action);
+    },
+    
+    navtopage : function(component, event, helper){
+ window.location.href = 'https://hp--configdev.lightning.force.com/one/one.app#/alohaRedirect/apex/MyCompRequestNewEditPage'
+
+ }
+    
+})
+
+------------------------------------
+CSS:
+
+.THIS #fivelinks{
+     font-size:20px;
+    height:35px;
+color: black;
+    font-weight:bold;
+    margin-bottom: 35px;
+}
+.THIS #col{
+    width: 40%;
+        margin-left: 15px;
+    
+}
+.THIS #col2{
+    width: 40%;
+    margin-left: 15px;
+}
+ .THIS #chatbox{
+   
+        padding-left: 45px;
+       font-size: 20px;
+        margin-top: 5px;
+        margin-right: 810px;
+    margin-left: 30px;
+    color:white;
+    border-radius:15px;
+    background-color:#00739d;
+    
+}
+.THIS #grid{
+   margin-top:30px;
+}
+.THIS .chat1{
+    width:35px;
+}
+.THIS .chat2{
+    width:40px;
+    
+}
+.THIS .chat:hover{
+    text-decoration: none;
+    color:white;
+}
+.THIS .slds-float--right{
+        float:right;
+    padding-top: 50px;
+    width: 10%;
+    margin-right: 35px;
+}
+.THIS .hewlett{
+    font-size:15px;
+    color:grey;
+    margin-left:35px;
+}
+.THIS .copy{
+    height:15px;
+}
+
+.THIS .links-spacing{
+    margin-left:30px;
+}
+.THIS .card{
+    
+    border-radius:15px;
+    height: 475px;
+    font-size:18px;
+    color:black;
+    padding-left:25px;
+        margin-left: 17px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        margin-right: 20px;
+   }
+.THIS .card2{
+    
+    border-radius:15px;
+    height: 475px;
+    font-size:18px;
+    color:black;
+    padding-left:25px;
+     margin-left: -10px;
+     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        margin-right: 50px;
+   }
+.THIS .line{
+   width:90%;
+    text-align:right;
+    margin-left: 25px;
+      
+    
+    }
+.THIS .line2{
+       width:90%;
+    text-align:right;
+    margin-left: 25px;
+        margin-top: 5px;
+}
+.THIS .line3{
+       width:90%;
+    text-align:right;
+    margin-left: 25px;
+        margin-top: 20px;
+}
+.THIS .link1{
+    height:5px;
+   
+}
+.THIS .disk1:hover{
+
+ transform: scale(1.05);
+
+ }
+.THIS .disk2:hover{
+
+ transform: scale(1.05);
+
+ }
+.THIS .disk3:hover{
+
+ transform: scale(1.05);
+
+ }
+.THIS .disk4:hover{
+
+ transform: scale(1.05);
+
+ }
+.THIS #heading{
+    font-size:25px;
+    padding-left:25px;
+    padding-bottom:15px;
+    font-weight:bold;
+}
+
+.THIS #heading2{
+    font-size:25px;
+    padding-left:10px;
+    font-weight:bold;
+    
+}
+.THIS .slds-text-link{
+    color:black;
+    font-size:18px;
+    font-weight:bold;
+}
+.THIS .chat{
+    color:white;
+    font-size:15px;
+}
+
+
+
+
+
+
+.THIS .hpe{
+    color:white;
+    font-weight: bold;
+    font-size:17px;
+        padding-left: 10px;
+    
+}
+.THIS .logo{
+        margin-top: -3px;
+    
+}
+.THIS .backgrd{
+    
+    margin-top: 12px;
+    background-color: #263040;
+}
+.THIS .head{
+    font-size:17px;
+    color:White;
+    margin-top: 7px;
+    margin-left: -25px;
+}
+
+ 
+
+.THIS .header{
+    
+        padding-top: 11px;
+    padding-left: 35px;
+    background-color: #404b5c;
+        font-size: 25px;
+    font-weight: 500;
+    margin-top: 1px;
+        height: 60px;
+    color: white;
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,0.1);
+    width:100%;
+    
+}
+
+.THIS .alert{
+        height: 20px;
+    
+        margin-right: 10px;
+}
+
+.THIS .message{
+    
+    background-color: #515966;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    height: 40px;
+    padding-left: 41px;
+    margin-left: 37px;
+    margin-right: 54px;
+    margin-top:30px;
+        padding-top: 3px;
+     border: 0.5px solid grey;
+    border-radius:5px;
+    
+}
+.THIS .back{
+    margin-right: 25px;
+    margin-left: 33px;
+}
+
+ 
+
+.THIS .heading{
+        padding-left: 35px;
+    font-size: 25px;
+    color: white;
+    font-weight: bold;
+    
+}
+.THIS .disk1{
+        height: 200px;
+    width: 330px;
+    border-radius:15px;
+    background-color:#17eba0;
+     
+}
+
+.THIS .disk2{
+       height: 200px;
+    width: 330px;
+    border-radius:15px;
+    background-color:#00e8cf;
+     
+      }
+ 
+.THIS .disk3{
+   height: 200px;
+    width: 330px;
+    border-radius:15px;
+    background-color:#ff8300;
+     
+  
+}
+.THIS .disk4{
+       height: 200px;
+    width: 330px; 
+      border-radius:15px;
+    background-color:#7630ea;
+     
+}
+.THIS #disk{
+    margin-left: 25px;
+    margin-right: 15px;
+}
+.THIS #tool{
+    font-size:20px;
+    padding-left:25px;
+    padding-bottom:15px;
+    font-weight:bold;
+    color:black;  
+}
+
+
+.THIS.page{
+     position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.THIS .line2{
+ margin-top: 5px;
+ width:90%;
+ text-align:right;
+ margin-left: 25px;
+
+ }
+.THIS #tool4{
+    font-size:20px;
+    padding-left:25px;
+    padding-bottom:15px;
+    font-weight:bold;
+    color:white;
+}
+
+.THIS #tool3{
+    font-size:20px;
+    padding-left:25px;
+    padding-bottom:15px;
+    font-weight:bold;
+    color:black; 
+    margin-top: -7px;
+}
+.THIS #tool1{
+        padding-top: 9px;
+    font-size:20px;
+    padding-left:25px;
+    padding-bottom:15px;
+    font-weight:bold;
+    color:black; 
+}
