@@ -1,0 +1,370 @@
+Prechat:
+
+<apex:page showHeader="false" standardController="LiveChatTranscript" id="PreChatPage">
+
+<script type="text/javascript">
+    (function() {
+        function handlePageLoad() {
+            var endpointMatcher = new RegExp("[\\?\\&]endpoint=([^&#]*)");
+            document.getElementById('prechatForm').setAttribute('action',
+            decodeURIComponent(endpointMatcher.exec(document.location.search)[1]));
+        } 
+        if (window.addEventListener) {
+            window.addEventListener('load', handlePageLoad, false);
+        } 
+        else { 
+            window.attachEvent('onload', handlePageLoad, false);
+        }
+    })();     
+</script>
+
+
+<form method='post' id='prechatForm' onsubmit="return(Validate())">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<div><apex:image url="{!URLFOR($Resource.OPBar, 'hp.jpg')}" height="40"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <h1 style="font-size:20px;color:#0101DF;">Global Help Desk Support for Sales Compensation </h1>
+</div>
+
+<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><apex:outputText value=" Welcome to Live Chat for Sales Reps " style="font-size:15px; background-color:maroon; color:#FFFFFF"/></b>
+<br/>
+<br/>
+<!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<center><apex:outputText value="{!$Label.PreChat_Verbiage}" /></center> -->
+<br/>
+<br/>
+<apex:panelGrid columns="6" cellpadding="6">
+<br/>
+    
+<tr>    
+<td>    
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Name: </b>
+</td>
+<td/>
+<td>
+    <input type='text' name='liveagent.prechat.name' id='prechat_field' value='{!$User.FirstName} {!$User.LastName}' style='width:150px'/><br/>
+</td>
+</tr>
+<tr>
+<td>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Email Address: </b>
+</td>
+<td/>
+<td>
+    <input type='text' name='liveagent.prechat:Email' value='{!$User.Email}' style='width:150px'/><br />
+    <!-- case poping with prechat -->
+  <!--  <input type="hidden" name="liveagent.prechat.findorcreate.map:Case" value="Origin;Subject;CaseNumber,caseNumber;" /> -->
+
+</td>
+</tr>
+<tr>
+<td>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Region: </b>
+</td>
+<td/>
+<td>
+    <select name="liveagent.prechat:Region" style='width:200px' id='CORegion' onchange="DependentCountry()">
+        <option value="None">Select One...</option>
+        <option value="AMS">AMS</option>
+        <option value="APJ">APJ</option>
+        <option value="EMEA">EMEA</option>
+    </select>
+</td>
+</tr>
+<tr>
+<td>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Country/Team: </b>
+        
+</td>
+<td/>
+<td>
+    <select name="liveagent.prechat:Country/Team" style='width:200px' id="COCountry">
+        <option>Select One...</option>
+    </select>
+</td>
+</tr>
+<tr>
+<td>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Category:</b>
+</td>
+<td/>
+<td>
+    <select name="liveagent.prechat:Business Function" style='width:200px' id="COBusinessFunc">
+        <option value="None">Select One...</option>
+        <option>Claims Resolution questions</option>
+        <option>Payment Dates</option>
+        <option>Bonus</option>
+        <option>Draw / Guarantee</option>
+        <option>PPS </option>
+    </select>
+</td>
+</tr>
+
+
+<tr>
+<td>
+    <b><font color="white">Queue: </font></b>
+</td>
+<td/>
+<td>
+    <select name="liveagent.prechat.buttons" style='width:155px;visibility:hidden' id='COQueue' >
+    <option>--None--</option>
+    <option value="{!$Label.Live_AMSOC}">AMS O&#38;C</option>
+    <option value="{!$Label.Live_AMS_Compass}">AMS COMPASS</option>
+    <option value="{!$Label.Live_AMS_etools}">AMS eTools</option>
+    <option value="{!$Label.Live_APJOC}">APJ O&#38;C</option>
+    <option value="{!$Label.Live_APJ_Compass}">APJ COMPASS</option>
+    <option value="{!$Label.Live_APJ_etools}">APJ eTools</option>
+    <option value="{!$Label.Live_EMEAOC}">EMEA O&#38;C</option>
+    <option value="{!$Label.Live_EMEA_Compass}">EMEA COMPASS</option>
+    <option value="{!$Label.Live_EMEA_etools}">EMEA eTools</option>
+    </select>
+</td>
+</tr>
+    <tr>
+<td>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Issue Description: </b>
+</td>
+<td/>
+<td>
+    <textarea rows='4' cols='50' name='liveagent.prechat:IssueDescription'/>   
+</td>
+</tr>
+<td>    
+ <!--    <input type='hidden' name='liveagent.prechat:Record Type' value='CO Live Transcript'/><br /> -->
+</td>    
+</apex:panelGrid>
+<br />
+
+
+    
+    
+    
+<!-- Creates an auto-query for a matching Contact recordâ€™s Email field based on the
+value of the liveagent.prechat:Email field -->
+<input type="hidden" name="liveagent.prechat.query:Email" value="User,User.Email" />
+<input type="hidden" name="liveagent.prechat.save:Email" value="Email__c" />
+<input type="hidden" name="liveagent.prechat.save:Region" value="Region__c" />
+<input type="hidden" name="liveagent.prechat.save:Country/Team" value="Country_Team__c" />
+<input type="hidden" name="liveagent.prechat.save:Business Function" value="Area__c" />
+
+<input type="hidden" name="liveagent.prechat.save:Record Type" value="Record_Type__c" />
+<input type="hidden" name="liveagent.prechat.save:IssueDescription" value="Issue_statement__c" />
+    
+ <input type="hidden" name="liveagent.prechat:CaseRecordType" value="01227000000WagQAAS" />
+    <input type="hidden" name="liveagent.prechat:CaseStatus" value="New" />
+    <input type="hidden" name="liveagent.prechat:CaseOrigin" value="Chat" />
+   
+    <input type="hidden" name="liveagent.prechat.findorcreate.map:Contact" value="Email,Email" />
+    <input type="hidden" name="liveagent.prechat.findorcreate.map.doFind:Contact" value="Email,true"/>
+     <input type="hidden" name="liveagent.prechat.findorcreate.map.isExactMatch:Contact" value="Email,true" />
+    <input type="hidden" name="liveagent.prechat.findorcreate.map:Case" value="Subject,IssueDescription;Status,CaseStatus;Origin,CaseOrigin;RecordTypeId,CaseRecordType"/>
+    <input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Case" value="Subject,true;Status,true;Origin,true;RecordTypeId,true" />
+   
+    <input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Contact" value="ContactId" />
+    <input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Case" value="CaseId" />
+    
+    <input type="hidden" name="liveagent.prechat.findorcreate.linkToEntity:Contact" value="Case,ContactId" />
+     <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Contact" value="False" /> 
+     <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Case" value="true" />
+   
+
+ 
+           
+<input type='submit' value='Request Chat' id='prechat_submit'/>
+<style type="text/css">
+p {font-weight: bolder }
+</style>
+
+<script src="/soap/ajax/27.0/connection.js" type="text/javascript"></script>
+<script src="/soap/ajax/27.0/apex.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+   sforce.connection.sessionId = '{!$Api.Session_ID}';
+
+   function ChatButton(){
+ 
+    var x = document.getElementById("COArea").value;
+    var y = document.getElementById("CORegion").value;
+    
+    if(y == "AMS"){
+        if(x=="O&C"){
+           var z = "{!$Label.Live_AMSOC}";
+           document.getElementById("COQueue").value = z;     
+        }
+        else if(x=="eTools"){
+           var z = "{!$Label.Live_AMS_etools}";
+           document.getElementById("COQueue").value = z;     
+        }
+        else if(x=="COMPASS"){
+           var z = "{!$Label.Live_AMS_Compass}";
+           document.getElementById("COQueue").value = z;     
+        }
+    }
+    else if(y=="APJ"){
+        if(x=="O&C"){
+           var z = "{!$Label.Live_APJOC}";
+           document.getElementById("COQueue").value = z;     
+        }
+        else if(x=="eTools"){
+           var z = "{!$Label.Live_APJ_etools}";
+           document.getElementById("COQueue").value = z;     
+        }
+        else if(x=="COMPASS"){
+           var z = "{!$Label.Live_APJ_Compass}";
+           document.getElementById("COQueue").value = z;     
+        }
+    }
+    else if(y=="EMEA"){
+        if(x=="O&C"){
+           var z = "{!$Label.Live_EMEAOC}";
+           document.getElementById("COQueue").value = z;     
+        }
+        else if(x=="eTools"){
+           var z = "{!$Label.Live_EMEA_etools}";
+           document.getElementById("COQueue").value = z;     
+        }
+        else if(x=="COMPASS"){
+           var z = "{!$Label.Live_EMEA_Compass}";
+           document.getElementById("COQueue").value = z;     
+        }
+    }    
+    
+   }  
+   
+   
+    function DependentCountry(){
+       var reg = document.getElementById("CORegion").value;
+       document.getElementById('COCountry').options.length = 0;
+
+       if (reg=="AMS"|| reg=="APJ"|| reg=="EMEA"){
+          var cont = sforce.apex.execute("LiveDependentCountry","CountryTeam",{liveReg:reg});
+          var respArray = cont[0].split("Live_Chat__c:").sort(); 
+          
+          for (i=1;i<respArray.length;i++){
+              var respLive = respArray[i].split(",");
+              optionStr = respLive[0].substring(12);
+              var SelectCon = document.createElement('OPTION');
+              SelectCon.text = optionStr;
+              SelectCon.value = optionStr;
+              document.getElementById('COCountry').options.add(SelectCon);
+          }          
+       }
+    }
+   
+   
+   function DependentSubject(){
+        var area = document.getElementById("COArea").value;
+        document.getElementById('COSubject').options.length = 0;      
+        
+        if (area=="O&C"|| area=="eTools"|| area=="COMPASS"){
+            var Sub = sforce.apex.execute("LiveDependentCountry","LiveSubject",{liveSub:area});
+            var respSub = Sub[0].split("Live_Subject__c:").sort();
+          
+            for (i=1;i<respSub.length;i++){
+                var respNew = respSub[i].split(",");
+                optionSub = respNew[0].substring(12);
+                var SelectSub = document.createElement('OPTION');
+                SelectSub.text = optionSub;
+                SelectSub.value = optionSub;
+                document.getElementById('COSubject').options.add(SelectSub);
+            }          
+        }
+    }
+   
+   
+   function Validate(){
+       if(document.getElementById('CORegion').value=="None"){
+           alert("Please select a region");
+           document.getElementById('CORegion').focus() ;
+           return false;
+       }       
+       if(document.getElementById('COCountry').value=="..Select One.."){
+           alert("Please select a Country");
+           document.getElementById('COCountry').focus() ;
+           return false;
+       }
+       if(document.getElementById('COBusinessFunc').value=="None"){
+           alert("Please select a Business Function");
+           document.getElementById('COBusinessFunc').focus() ;
+           return false;
+       }
+       if(document.getElementById('COArea').value=="None"){
+           alert("Please select a CO Area");
+           document.getElementById('COArea').focus() ;
+           return false;
+       }
+       if(document.getElementById('COSubject').value=="..Select One.."){
+           alert("Please select a Subject");
+           document.getElementById('COSubject').focus() ;
+           return false;
+       }
+   
+    return true;
+   }
+   
+ 
+</script>
+
+</form>
+</apex:page>
+
+===================================================
+Postchat:
+
+<apex:page showHeader="false" standardController="LiveChatTranscript" extensions="PostChatFormController" sidebar="true">
+
+<script language="javascript">
+    function ReqTimeFunc(){
+        var  postReqTime = '{!$CurrentPage.parameters.requestTime}';
+        var postreq = new Date();
+        if (postReqTime!=''){
+            postreq.setTime(+postReqTime);
+            var reqUTC = postreq.toUTCString();
+            var x = document.getElementById('{!$Component.reqTime}');
+            x.innerHTML= reqUTC;
+        }
+        //alert (postReqTime);
+        //alert (postreq);        
+    }
+    
+    function StartTimeFunc(){
+        var postStartTime = '{!$CurrentPage.parameters.startTime}';
+        var poststr = new Date();
+        if (postStartTime!=''){
+            poststr.setTime(+postStartTime);
+            var strUTC = poststr.toUTCString();
+            var y = document.getElementById('{!$Component.strTime}');
+            y.innerHTML= strUTC;
+        }
+        //alert (postStartTime);
+        //alert (poststr);        
+    }
+</script>
+
+<!--{!$CurrentPage.url}-->
+<br/>
+<div><apex:image url="{!URLFOR($Resource.OPBar, 'hp.jpg')}" height="50"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <h1 style="font-size:20px;color:#0101DF;">Thank You for contacting Sales Compensation Support</h1>
+</div>
+<br/> <br/> <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><apex:outputText value="It was a Pleasure assisting you" style="font-size:15px;background-color:#F778A1;color: #FFFFFF"/></b>
+<br/>
+<br/> <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<apex:outputText value="Please find Chat Details below, for your reference " style="font-size:15px;color: #000000"/></b>
+<br/><br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Request Time: <apex:outputText value="{!CurrentRequestTime}" escape="false" id="reqTime"/><br/>
+<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Start Time: <apex:outputText value="{!CurrentStartTime}" escape="false" id="strTime"/><br/>
+<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chat Closed By: &nbsp; <apex:outputText value="{!CurrentDisconnectedBy}"/><br/>
+<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chat Key: <apex:outputText value="{!$CurrentPage.parameters.id}"/><br/>
+<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Transcript: <apex:outputText value="{!$CurrentPage.parameters.transcript}" /><br/>
+
+<br/><br/><br/>
+
+<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<apex:outputText value="{!$Label.CO_PostChat_Survey_Name}" /></b> <br/><br/>
+<!-- <i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<apex:outputLink value="{!$Label.CO_PostChat_Survey}" target="_blank">{!$Label.CO_PostChat_Survey}</apex:outputLink></i> -->
+
+<br/><br/><br/><br/><br/>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<apex:image url="{!URLFOR($Resource.OPBar, 'hp.jpg')}" height="15"/>
+<!-- <apex:outputText value="HP Confidential  " style="font-size:10px;color: #0000FF"/> -->
+</apex:page>
+
