@@ -1,0 +1,552 @@
+component:
+
+<aura:component controller ="Mycompclaimcaseinline" implements="force:lightningQuickActionWithoutHeader,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId" access="global" >
+    <aura:attribute name ="recordId" type ="string" />
+    <aura:attribute name ="comps" type = "Object"/>
+    <aura:attribute name ="claimNumber" type="string"/>
+    <aura:attribute name ="ClientProgRec" type="Object"/>
+    
+    <aura:attribute name ="currentContentLibrary1" type="Object"/>
+    <aura:attribute name ="currentContentLibrary2" type="Object"/>
+    <aura:attribute name ="fiscalYear" type="Object"/>
+    
+    <aura:attribute name="fiscalFieldLabel" type="string" />
+    <aura:attribute name="fiscalValue" type="string" default=""/>
+    <aura:attribute name="fiscalList" type="list" default="[]" description=""/>
+    
+    <aura:attribute type="Object" name="record"/>
+    <aura:attribute name ="show" type ="boolean" default ="true"/>
+    <aura:attribute name ="hide" type ="boolean" />
+    <aura:attribute name="myCompId" type="string" default="{!v.ClientProgRec.MyComp_Claim__c}"/>
+    <aura:attribute name ="myComp" type ="MyComp_Claim__c"/>
+    <aura:attribute name="recordSaveError" type="String" description="An error message bound to force:recordData"/>
+    
+    <aura:attribute name="spinner" type ="boolean" default="false"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>   
+    
+    
+    <force:recordData aura:id="recordLoader"
+                      recordId="{!v.recordId}"
+                      fields="MyComp_Claim__c,Id"                       
+                      targetRecord="{!v.record}"            
+                      targetError="{!v.recordError}"
+                      targetFields="{!v.ClientProgRec}"
+                      mode="EDIT"
+                      />
+    <!--Loading of spinner start-->
+    <aura:if isTrue="{!v.spinner}">
+    <div aura:id="spinnerId" class="slds-spinner_container">
+        <div class ="slds-spinner--brand slds-spinner slds-spinner--large slds-is-relative" role="alert">
+            <span class="slds-assistive-text">Loading...Please wait</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+        </div>
+    </aura:if>
+    <!--Loading of spinner end -->
+    
+   <!-- Block executes when we click on save start-->
+  <aura:if isTrue="{!v.hide}">
+        <center class="saveit"><lightning:button  variant="brand" type ="submit" label="Save Claim" title="Saving..." onclick="{! c.onSave }" /> </center><br></br>
+      <div class="cancel"><lightning:button variant="brand" label="Cancel" title="Brand action" onclick="{! c.handleCancel }" /></div><hr></hr>
+      
+       <lightning:recordEditForm  recordId="{!v.myCompId}" objectApiName="MyComp_Claim__c" aura:id="claimField" class="detailfont"> 
+      <div class="slds-grid">
+              <div class="slds-col left1">
+              
+                    <lightning:messages />
+                    <lightning:outputField fieldName="Name" /><hr class="line"/>
+                    <lightning:inputField fieldName="Sales_Employee_Name__c" disabled="true" /><hr class="line"/>
+                    <lightning:inputField fieldName="Credit_Amount_USD__c" aura:id="CreditAmountUSD"/><hr class="line"/>
+                    <lightning:outputField fieldName="Compensation_Plan_Code__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="BG__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Fiscal_Period__c" /><hr class="line"/>
+                    <lightning:inputField fieldName="Claim_Status__c" aura:id="ClaimStatus"  /><hr class="line"/>
+                    <lightning:outputField fieldName="HQ__c" /><hr class="line"/>
+                    <lightning:inputField fieldName="Selling_Motion__c" aura:id="SellingMotion"/><hr class="line"/>
+              </div>
+        
+               <div class="slds-col right1">
+                    <lightning:messages />
+                    <lightning:outputField fieldName="ClaimType__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Claim_Amount__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Claim_Version__c" /><hr class="line"/>
+                    <lightning:inputField fieldName="Compensation_Plan_Code_CA__c" aura:id="CompensationPlanCodeCA" /><hr class="line"/>
+                    <lightning:inputField fieldName="BG_CA__c" aura:id="BGCA"/><hr class="line"/>
+                    <lightning:inputField fieldName="Fiscal_Period_CA__c" aura:id="FiscalPeriodCA" /><hr class="line"/>
+                    <lightning:inputField fieldName="Fiscal_year_CA__c" aura:id="FiscalyearCA" value="{!v.fiscalYear}"/>  <hr class="line"/>                    
+                    <lightning:inputField fieldName="Special_Program_CA__c" aura:id="SpecialProgramCA"/><hr class="line"/>
+              </div>
+          </div></lightning:recordEditForm>
+    <!--clicking on save end-->
+      
+  <aura:set attribute="else">
+<aura:if isTrue="{!v.show}">  
+    <center><lightning:button variant="brand" aura:id="mySelect" label="Edit Claim" title="Brand action" onclick="{! c.handleClick }" /> </center>
+       <hr class="editLine"></hr>
+     <lightning:recordViewForm  recordId="{!v.myCompId}" objectApiName="MyComp_Claim__c" aura:id="claimField"  class="detailfont">
+          <div class="slds-grid">
+              <div class="slds-col left1">
+              
+                    <lightning:messages />
+                    <lightning:outputField fieldName="Name" /><hr class="line"/>
+                    <lightning:outputField fieldName="Sales_Employee_Name__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Credit_Amount_USD__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Compensation_Plan_Code__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="BG__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Fiscal_Period__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Claim_Status__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="HQ__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Selling_Motion__c" /><hr class="line"/>
+              </div>
+        
+               <div class="slds-col right1">
+                    <lightning:outputField fieldName="ClaimType__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Claim_Amount__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Claim_Version__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Compensation_Plan_Code_CA__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="BG_CA__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Fiscal_Period_CA__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Fiscal_year_CA__c" /><hr class="line"/>
+                    <lightning:outputField fieldName="Special_Program_CA__c" /><hr class="line"/>
+              </div>
+          </div></lightning:recordViewForm>
+    
+      </aura:if>
+      </aura:set>
+    </aura:if>
+    
+     <hr></hr>
+                 <div class="slds-card section">    
+                <p class ="lib">Content Library for CA</p>
+                </div>
+                <lightning:card>
+              <div class="slds-grid">
+                    
+                 <div class="slds-col">
+                     <aura:iteration items = "{!v.currentContentLibrary1}" var="current1">
+                      <!--   <span  class="icon"><lightning:icon iconName="utility:play"></lightning:icon></span> -->
+                         <b class="libLink"><a href="{!current1.Link_URL__c}" target="_blank" class="slds-text-link" >{!current1.Display_Link_Name__c}</a></b><br/><br/>
+                     </aura:iteration>
+                     
+                 </div>
+                    
+                  <div class="slds-col">
+                     
+                     <aura:iteration items = "{!v.currentContentLibrary2}" var="current2">
+                         <!-- <span class="icon"> <lightning:icon iconName="utility:play" ></lightning:icon></span>-->
+                         <b class="libLink"><a href="{!current2.Link_URL__c}" target="_blank" class="slds-text-link" >{!current2.Display_Link_Name__c}</a></b><br/><br/>
+                     </aura:iteration>
+                 </div>
+                <hr></hr>
+                </div> 
+                </lightning:card>
+    
+</aura:component>
+
+=====================================
+Controller:
+
+({
+    doInit : function(component,event,helper){
+      //  alert('in doInit called');
+        var recordId = component.get("v.recordId");
+        var action = component.get("c.fetchMyCompClaim");
+        var action1 = component.get("c.fiscal");
+        action.setParams({ recordId:recordId });
+        action.setCallback( this, function(response) {
+            var state = response.getState();
+            if(state === "SUCCESS"){
+                console.log(response.getReturnValue());
+               // alert('it is success');
+                let resObj_Json1 = JSON.parse(response.getReturnValue());
+                //alert('resObj_Json1  ==> '+resObj_Json1);
+                var currentContentLibrary1 = resObj_Json1.currentLib1; 
+                component.set('v.currentContentLibrary1', currentContentLibrary1);
+                
+                //alert('currentContentLibrary1'+currentContentLibrary1);
+                //alert('data ' + JSON.stringify( response.getReturnValue() ) );
+                let resObj_Json2 = JSON.parse(response.getReturnValue());
+                
+                var currentContentLibrary2 = resObj_Json2.currentLib2; 
+                component.set('v.currentContentLibrary2', currentContentLibrary2);
+              
+            }
+            
+        });
+        
+        
+        action1.setCallback( this, function(response1) {
+            var state = response1.getState();
+            if(state === "SUCCESS"){
+                
+                   var resObj_Json3 = JSON.parse(response1.getReturnValue());
+                alert('resObj_Json3  ==> '+resObj_Json3);
+                var fiscalYear = resObj_Json3.fical; 
+                alert('fiscal year value'+fiscalYear);
+                component.set("v.fiscalYear",resObj_Json3.fiscalYear);
+               alert('data ' + JSON.stringify( response1.getReturnValue() ) );
+              
+            }
+            
+        });
+        $A.enqueueAction(action);
+        $A.enqueueAction(action1);
+    },
+    
+    handleClick : function(component, event, helper) {
+        
+        component.set("v.show",false);
+        component.set("v.hide",true);
+    },
+    
+    //this function executes save button is clicked
+    onSave : function(component, event, helper) {
+        component.set("v.show",true);
+        component.set("v.hide",false);
+        var recordId = component.get("v.recordId");
+        var dataJs ;
+        if(recordId != null){
+            var arrayMapKeys ={};
+            arrayMapKeys['Credit_Amount_USD__c']= component.find("CreditAmountUSD").get("v.value");
+            
+                arrayMapKeys['Claim_Status__c']= component.find("ClaimStatus").get("v.value");
+            
+            arrayMapKeys['Selling_Motion__c']= component.find("SellingMotion").get("v.value");
+            arrayMapKeys['Compensation_Plan_Code_CA__c']= component.find("CompensationPlanCodeCA").get("v.value");
+            arrayMapKeys['BG_CA__c']= component.find("BGCA").get("v.value");
+            arrayMapKeys['Fiscal_Period_CA__c']= component.find("FiscalPeriodCA").get("v.value");
+            arrayMapKeys['Fiscal_year_CA__c']= component.find("FiscalyearCA").get("v.value");
+            arrayMapKeys['Special_Program_CA__c']= component.find("SpecialProgramCA").get("v.value");
+            dataJs= JSON.stringify(arrayMapKeys);
+            var action = component.get("c.saveClaim");
+            action.setParams({ data : dataJs, recordId:recordId });
+            console.log('data value is'+dataJs);
+            action.setCallback(this, function(response) {
+                var state = response.getState();
+                if (state === "SUCCESS") {                
+                    console.log("From server: " + response.getReturnValue());  
+                    $A.get('e.force:refreshView').fire();     
+                }
+                else if (state === "INCOMPLETE") {
+                    // do something
+                }
+                    else if (state === "ERROR") {
+                        var errors = response.getError();
+                        if (errors) {
+                            if (errors[0] && errors[0].message) {
+                                console.log("Error message: " + 
+                                            errors[0].message);
+                            }
+                        } else {
+                            console.log("Unknown error");
+                        }
+                    }
+            });
+            $A.enqueueAction(action);
+        }
+        
+    },
+    
+     handleCancel : function(component, event, helper) {
+        $A.get("e.force:closeQuickAction").fire();
+        var navEvt = $A.get("e.force:navigateToSObject");
+                navEvt.setParams({
+                    "recordId": component.get("v.recordId")
+                });
+                navEvt.fire();
+    },
+    
+    //This function automatic call by aur:waiting event
+    showSpinner: function(component,event,helper){
+        component.set("v.spinner",true);
+    },
+    
+    hideSpinner: function(component,event,helper){
+        component.set("v.spinner",false);
+    }
+    
+})
+
+
+=========================================
+Helper:
+
+({
+	getAllUsersDetails : function(component,event,getInputkeyWord){
+        component.set("v.userdatatablelist", []);
+        component.set("v.SearchKeyWord1",getInputkeyWord);
+        var action = component.get("c.fetchdatalookupValues");
+        
+        action.setParams({
+            'searchKeyWord': getInputkeyWord,
+            'initialRows' : component.get("v.initialRows"),
+            'ObjectName' : component.get("v.objectAPIName")
+          }); 
+        action.setCallback(this, function(response) {
+          $A.util.removeClass(component.find("mySpinner"), "slds-show");
+            var state = response.getState();
+            if (state === "SUCCESS") {
+                var storeResponse = response.getReturnValue();
+                component.set("v.totalRows",storeResponse.totalRecords);
+                var userresponse = response.getReturnValue().UserList;
+                for(var x=0; x<userresponse.length; x++){
+                    var returnDatas = userresponse[x];
+                    //alert('returnDatas'+JSON.stringify(returnDatas));
+                    if (returnDatas.UserRole) {
+                        returnDatas.UserRole = returnDatas.UserRole.Name;
+                     }
+                    userresponse[x].namecssclass = 'namecolor';
+                }
+                //alert('storeResponse'+JSON.stringify(storeResponse));
+                // alert('storeResponseuser'+JSON.stringify(storeResponse.UserList));
+              // if storeResponse size is equal 0 ,display No Result Found... message on screen.                }
+                if (userresponse.length > 0) {
+                    component.set("v.userdatatablelist", storeResponse.UserList);
+                   var currentdata = component.get("v.userdatatablelist");
+                } 
+            }
+             else{
+                var errors = response.getError();
+                if (errors) {
+                    component.set("v.Message",errors[0].message);
+                }
+            }
+ 
+        });
+      // enqueue the Action  
+        $A.enqueueAction(action);
+    },
+    createSubCaseInApprover : function(component, event, helper){
+         component.set("v.ErrorMessage","");
+         console.log(" >>>>>>> selectedDOAname >>>>>>>>>" + component.get("v.selectedDOAname"));
+         console.log(" >>>>>>> selectedDOAnumber >>>>>>>>>" + component.get("v.selectedDOAnumber"));
+         console.log(" >>>>>>> subCaseDesc >>>>>>>>>" + component.get("v.subCaseDesc"));
+         console.log(" >>>>>>> AllApprovalList >>>>>>>>>" + JSON.stringify(component.get("v.AllApprovalList")));
+            
+        var action = component.get("c.createSubCaseForApproval");
+        var caseId=component.get("v.recordId");
+        action.setParams({
+            'caseId': caseId,
+            'selectedDOAname' : component.get("v.selectedDOAname"),
+            'selectedDOAnumber' : component.get("v.selectedDOAnumber"),
+			'subCaseDesc' : component.get("v.subCaseDesc"),
+			'ApproverClassListStr' : JSON.stringify(component.get("v.AllApprovalList"))
+          }); 
+        action.setCallback(this, function(response) {
+         
+            var state = response.getState();
+            console.log(" >>>>>>> state >>>>>>>>>" + state);
+            if (state === "SUCCESS") {
+                var subCaseResponse = response.getReturnValue();                
+                console.log(" >>>>>>> subCaseResponse >>>>>>>>>" + subCaseResponse);
+               // redirect to Case record
+               	var navEvt = $A.get("e.force:navigateToSObject");
+                navEvt.setParams({
+                    "recordId": caseId,
+                    "slideDevName": "related"
+                });
+                navEvt.fire();
+            }
+             else{
+                var errors = response.getError();
+                if (errors) {
+                    component.set("v.ErrorMessage",errors[0].message);
+                    console.log("Error message >>"+errors[0].message);
+                }
+            }
+ 
+        });
+      // enqueue the Action  
+        $A.enqueueAction(action);
+    },
+    createSubCaseInDependentTask : function(component, event, helper){
+         component.set("v.ErrorMessage","");
+         console.log(" >>>>>>> selectedDependentTask >>>>>>>>>" + component.get("v.selectedDependentTask"));
+         console.log(" >>>>>>> TaskDesc >>>>>>>>>" + component.get("v.DependentTaskDesc"));
+         console.log(" >>>>>>> DependentTaskUser >>>>>>>>>" + JSON.stringify(component.get("v.DependentTaskUser")));
+         console.log(" >>>>>>> DependentTaskUser email>>>>>>>>>" + component.get("v.DependentTaskUser").Email);  
+        var action = component.get("c.createSubCaseforDependentTask");
+        var caseId=component.get("v.recordId");
+        action.setParams({
+            'caseId': caseId,
+            'selectedTask' : component.get("v.selectedDependentTask"),
+            'TaskDesc' : component.get("v.DependentTaskDesc"),
+			'selectedUserEmail' : component.get("v.DependentTaskUser").Email
+          }); 
+        action.setCallback(this, function(response) {
+         
+            var state = response.getState();
+            console.log(" >>>>>>> state >>>>>>>>>" + state);
+            if (state === "SUCCESS") {
+                var subCaseResponse = response.getReturnValue();                
+                console.log(" >>>>>>> subCaseResponse >>>>>>>>>" + subCaseResponse);
+               // redirect to Case record
+               	var navEvt = $A.get("e.force:navigateToSObject");
+                navEvt.setParams({
+                  "recordId": caseId,
+                  "slideDevName": "related"
+                });
+                navEvt.fire();
+            }
+             else{
+                var errors = response.getError();
+                if (errors) {
+                    component.set("v.ErrorMessage",errors[0].message);
+                    console.log("Error message >>"+errors[0].message);
+                }
+            }
+ 
+        });
+      // enqueue the Action  
+        $A.enqueueAction(action);
+    }
+})
+
+================================
+Style:
+
+.THIS .section
+{
+    width: 218px;    
+    font-size: 18px;
+    font-weight: bold;
+}
+.THIS .style
+{      
+    font-size: 20px;
+    font-weight: bold;
+}
+.THIS .back
+{
+    margin-top: -27px;
+    margin-right: 374px;
+}
+.THIS .check
+{
+    margin-left: 33px;
+    margin-top: -16px;
+    font-weight: bold;
+}
+.THIS .line
+{
+    margin-top: 10px;
+}
+.THIS .detailfont{
+  font-size: 14px;
+    font-weight: bold;
+  
+}
+
+.THIS .app{
+  
+    font-weight: bold;
+  
+}
+.THIS .bottom{
+  
+ margin-top: 111px;
+  
+}
+
+==============================================
+Class:
+
+public class Mycompclaimcaseinline {
+    
+    //for populating current library from mappers
+    
+    @AuraEnabled
+    public static string fetchMyCompClaim(String recordId){
+     Id claimId;
+     list<case> listCases = new list<case>();
+      list<SelectOption> FiscalYearCa = new list<SelectOption>();
+      list <MyCompClaim_Mapper__c> listMapper = new List<MyCompClaim_Mapper__c>();
+      list <MyCompClaim_Mapper__c> listLinks  = new List<MyCompClaim_Mapper__c>();
+      list <MyCompClaim_Mapper__c> listLinks1 = new List<MyCompClaim_Mapper__c>();
+      list <MyCompClaim_Mapper__c> listLinks2 = new List<MyCompClaim_Mapper__c>();
+        MyComp_Claim__c claimrec;
+        system.debug('caseId---->'+recordId);
+        Case caseRecord = [select id,MyComp_Claim__r.Id from case where id =:recordId];
+        Id myCompClaimId = caseRecord.MyComp_Claim__r.Id ;
+        
+        system.debug('myCompClaimId ===> '+myCompClaimId);
+        if(myCompClaimId!= null)
+        {          
+            claimrec =  [Select id,Name,Sales_Employee_Name__c,Credit_Amount_USD__c,Compensation_Plan_Code__c,BG__c,Fiscal_Period__c,Claim_Status__c,HQ__c,Selling_Motion__c,ClaimType__c,Claim_Amount__c,Claim_Version__c,Compensation_Plan_Code_CA__c,BG_CA__c,Region__c,Fiscal_Period_CA__c,Fiscal_year_CA__c,Special_Program_CA__c from MyComp_Claim__c where id=: myCompClaimId];        
+        }
+        system.debug('claimrec ===> '+claimrec);
+       listMapper = [select Fiscal_Year__c,Display_Link_Name__c,Link_URL__c,Region__c,map_type__c,User_BG__c from MyCompClaim_Mapper__c where (Fiscal_Year__c!=null or map_type__c='CONTENT LIBRARY CA') order by Fiscal_Year__c NULLS LAST];
+        system.debug('listMapper ****'+listMapper);
+      
+      if(listMapper !=null && listMapper .size()>0){
+            for(MyCompClaim_Mapper__c mapper: listMapper){
+              
+                    if( claimrec.Region__c==mapper.Region__c ){
+                        listLinks.add(mapper);
+                    }
+                
+            }
+            for(integer i=0;i<listLinks.size();i++){
+                if(i<=listLinks.size()/2)
+                    listLinks1.add(listLinks[i]);
+                else
+                    listLinks2.add(listLinks[i]);
+            }
+        }
+       system.debug('listLinks1  ==> '+listLinks1.size());
+        system.debug('listLinks2  ==> '+listLinks2.size());
+        String JSONString='';
+        
+        JSONString = '{ "currentLib1":' + JSON.serialize(listLinks1) + ', "currentLib2":'+ JSON.serialize(listLinks2) +  '}';
+        system.debug('currentLibRecs'+JSONString);
+        return JSONString;
+}
+    @AuraEnabled
+    public static string fiscal(){
+         list<selectOption> FiscalYearCa = new list<SelectOption>(); 
+      list <MyCompClaim_Mapper__c> listMapper ;
+         listMapper = [select Fiscal_Year__c,Display_Link_Name__c,Link_URL__c,Region__c,map_type__c,User_BG__c from MyCompClaim_Mapper__c where (Fiscal_Year__c!=null or map_type__c='CONTENT LIBRARY CA') order by Fiscal_Year__c NULLS LAST];
+        system.debug('listMapper ****'+listMapper);
+        if(listMapper !=null && listMapper .size()>0){
+             system.debug('listMapper1 ****'+listMapper);
+           // FiscalYearCa=new list<SelectOption>();
+            FiscalYearCa.add(new SelectOption('','--None--'));
+			
+             for(MyCompClaim_Mapper__c app: listMapper ){
+            system.debug('app****'+app);
+                if(app.Fiscal_Year__c!=null && app.map_type__c=='Fiscal Year(CA)')     
+                    FiscalYearCa.add(new SelectOption(app.Fiscal_Year__c , app.Fiscal_Year__c ));
+                     
+            }
+               
+        }
+        String JSONString='';
+       JSONString = '{ "fical":' + JSON.serialize(FiscalYearCa) +   '}';
+        system.debug('currentLibRecs'+JSONString);
+        return JSONString;
+    }
+    
+      @AuraEnabled
+    public static String  saveClaim(String data,Id recordId) {
+        MyComp_Claim__c comp = (MyComp_Claim__c)System.JSON.deserialize(data, MyComp_Claim__c.class);
+        Case caseRecord = [select id,MyComp_Claim__r.Id from case where id =:recordId];
+        if(caseRecord != null){
+            Id myCompClaimId = caseRecord.MyComp_Claim__r.Id ;
+        system.debug('data value---'+data);
+        comp.Id = myCompClaimId;
+        if (comp.Id != null) {
+            update comp;
+        } 
+        return comp.Id;
+    }
+        return null;
+        
+        
+    }
+    
+     
+     
+}
